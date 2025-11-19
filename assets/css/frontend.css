@@ -42,7 +42,27 @@
 
 .wpqb-bundle-option.selected {
     border-color: #2271b1;
+    border-width: 3px;
     background: #f0f6fc;
+    box-shadow: 0 4px 12px rgba(34, 113, 177, 0.2);
+    position: relative;
+}
+
+.wpqb-bundle-option.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #2271b1;
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
 }
 
 .wpqb-bundle-image {
@@ -90,6 +110,13 @@
 .wpqb-bundle-price ins {
     text-decoration: none;
     color: #e74c3c;
+}
+
+.wpqb-per-item-price {
+    font-size: 0.85em;
+    color: #666;
+    margin-bottom: 8px;
+    font-style: italic;
 }
 
 .wpqb-bundle-savings {
