@@ -1,0 +1,128 @@
+/* WC Products Qty Bundle - Admin Styles */
+
+.wpqb-qty-bundles {
+    border-top: 1px solid #eee;
+    margin-top: 20px;
+}
+
+#wpqb-bundles-container {
+    padding: 0 12px;
+}
+
+.wpqb-bundle-item {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    position: relative;
+}
+
+.wpqb-bundle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.wpqb-bundle-header h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.wpqb-remove-bundle {
+    color: #a00;
+    border-color: #a00;
+}
+
+.wpqb-remove-bundle:hover {
+    background: #a00;
+    border-color: #a00;
+    color: #fff;
+}
+
+.wpqb-bundle-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.wpqb-bundle-fields .form-field {
+    margin: 0;
+    padding: 0;
+}
+
+.wpqb-bundle-fields .form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.wpqb-bundle-fields .form-field input[type="text"],
+.wpqb-bundle-fields .form-field input[type="number"] {
+    width: 100%;
+    max-width: 100%;
+}
+
+.wpqb-name-field {
+    grid-column: 1 / -1;
+}
+
+.wpqb-image-field {
+    grid-column: 1 / -1;
+}
+
+.wpqb-image-preview {
+    margin: 10px 0;
+    min-height: 50px;
+}
+
+.wpqb-image-preview img {
+    display: block;
+    max-width: 100px;
+    max-height: 100px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 5px;
+    background: #fff;
+}
+
+.wpqb-upload-image,
+.wpqb-remove-image {
+    margin-right: 10px;
+    height: fit-content;
+}
+
+.wpqb-add-bundle {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+    margin-top: 10px;
+}
+
+.wpqb-add-bundle:hover {
+    background: #135e96;
+    border-color: #135e96;
+    color: #fff;
+}
+
+/* Template for new bundles - hidden */
+#wpqb-bundle-template {
+    display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 782px) {
+    .wpqb-bundle-fields {
+        grid-template-columns: 1fr;
+    }
+    
+    .wpqb-bundle-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
