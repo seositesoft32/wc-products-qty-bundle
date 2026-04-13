@@ -204,6 +204,17 @@ class WPQB_Plugin_init
         echo '<h3 class="wpqb-bundles-title">' . __('Quantity Bundles', 'wpqb') . '</h3>';
         echo '<input type="hidden" name="wpqb_selected_bundle" id="wpqb-selected-bundle" value="" />';
         echo '<div class="wpqb-bundles-list">';
+        echo '<div class="wpqb-bundles-table-wrap">';
+        echo '<table class="wpqb-bundles-table">';
+        echo '<thead><tr>';
+        echo '<th>' . __('Image', 'wpqb') . '</th>';
+        echo '<th>' . __('Bundle', 'wpqb') . '</th>';
+        echo '<th>' . __('Quantity', 'wpqb') . '</th>';
+        echo '<th>' . __('Total Price', 'wpqb') . '</th>';
+        echo '<th>' . __('Per Item', 'wpqb') . '</th>';
+        echo '<th>' . __('Savings', 'wpqb') . '</th>';
+        echo '</tr></thead>';
+        echo '<tbody>';
         
         foreach ($bundles as $index => $bundle) {
             $bundle_name = isset($bundle['name']) ? $bundle['name'] : '';
@@ -219,7 +230,7 @@ class WPQB_Plugin_init
             $display_price = $sale_price > 0 ? $sale_price : $regular_price;
             $has_sale = $sale_price > 0 && $sale_price < $regular_price;
             
-            echo '<div class="wpqb-bundle-option" 
+            echo '<tr class="wpqb-bundle-option" 
                        data-bundle-index="' . esc_attr($index) . '"
                        data-bundle-name="' . esc_attr($bundle_name) . '"
                        data-qty="' . esc_attr($qty) . '" 
@@ -227,29 +238,29 @@ class WPQB_Plugin_init
                        data-regular-price="' . esc_attr($regular_price) . '"
                        data-sale-price="' . esc_attr($sale_price) . '">';
             
+            echo '<td class="wpqb-col-image">';
             if ($image_id) {
                 $image_url = wp_get_attachment_image_url($image_id, 'thumbnail');
                 if ($image_url) {
-                    echo '<div class="wpqb-bundle-image">';
-                    echo '<img src="' . esc_url($image_url) . '" alt="' . esc_attr($bundle_name ? $bundle_name : sprintf(__('Bundle of %d', 'wpqb'), $qty)) . '" />';
-                    echo '</div>';
+                    echo '<img class="wpqb-bundle-image" src="' . esc_url($image_url) . '" alt="' . esc_attr($bundle_name ? $bundle_name : sprintf(__('Bundle of %d', 'wpqb'), $qty)) . '" />';
                 }
+            } else {
+                echo '<span class="wpqb-empty">-</span>';
             }
+            echo '</td>';
             
-            echo '<div class="wpqb-bundle-details">';
-            
-            // Display bundle name if available
+            echo '<td class="wpqb-col-name">';
             if (!empty($bundle_name)) {
-                echo '<div class="wpqb-bundle-name">' . esc_html($bundle_name) . '</div>';
+                echo '<span class="wpqb-bundle-name">' . esc_html($bundle_name) . '</span>';
+            } else {
+                echo '<span class="wpqb-bundle-name">' . sprintf(__('Bundle %d', 'wpqb'), $index + 1) . '</span>';
             }
+            echo '</td>';
             
-            echo '<div class="wpqb-bundle-qty">' . sprintf(__('Bundle: %d items', 'wpqb'), $qty) . '</div>';
+            echo '<td class="wpqb-col-qty">' . sprintf(__('%d items', 'wpqb'), $qty) . '</td>';
             
-            // Calculate per-item price for display
             $per_item_price = $qty > 0 ? $display_price / $qty : 0;
-            $per_item_regular = $qty > 0 ? $regular_price / $qty : 0;
-            
-            echo '<div class="wpqb-bundle-price">';
+            echo '<td class="wpqb-col-price wpqb-bundle-price">';
             
             if ($has_sale) {
                 echo '<del>' . wc_price($regular_price) . '</del> ';
@@ -257,25 +268,25 @@ class WPQB_Plugin_init
             } else {
                 echo wc_price($regular_price);
             }
-            
-            echo '</div>';
-            
-            // Show per-item price
-            if ($qty > 1) {
-                echo '<div class="wpqb-per-item-price">' . sprintf(__('%s per item', 'wpqb'), wc_price($per_item_price)) . '</div>';
-            }
-            
-            // Calculate savings
+            echo '</td>';
+
+            echo '<td class="wpqb-col-per-item">' . wc_price($per_item_price) . '</td>';
+
+            echo '<td class="wpqb-col-savings">';
             if ($has_sale) {
                 $savings = $regular_price - $sale_price;
                 $savings_percent = round(($savings / $regular_price) * 100);
-                echo '<div class="wpqb-bundle-savings">' . sprintf(__('Save %s (%d%%)', 'wpqb'), wc_price($savings), $savings_percent) . '</div>';
+                echo '<span class="wpqb-bundle-savings">' . sprintf(__('Save %s (%d%%)', 'wpqb'), wc_price($savings), $savings_percent) . '</span>';
+            } else {
+                echo '<span class="wpqb-empty">-</span>';
             }
-            
-            echo '</div>';
-            echo '</div>';
+            echo '</td>';
+            echo '</tr>';
         }
         
+        echo '</tbody>';
+        echo '</table>';
+        echo '</div>';
         echo '</div>';
         echo '</div>';
     }

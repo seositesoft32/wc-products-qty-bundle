@@ -9,162 +9,117 @@
 }
 
 .wpqb-bundles-title {
-    margin: 0 0 20px;
+    margin: 0 0 16px;
     font-size: 1.2em;
     font-weight: 600;
     color: #333;
 }
 
-.wpqb-bundles-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 15px;
+.wpqb-bundles-table-wrap {
+    overflow-x: auto;
+}
+
+.wpqb-bundles-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #e3e3e3;
+}
+
+.wpqb-bundles-table th,
+.wpqb-bundles-table td {
+    border-bottom: 1px solid #ececec;
+    padding: 12px 10px;
+    vertical-align: middle;
+}
+
+.wpqb-bundles-table th {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #666;
+    background: #f6f7f7;
+    text-align: left;
 }
 
 .wpqb-bundle-option {
-    background: #fff;
-    border: 2px solid #e5e5e5;
-    border-radius: 4px;
-    padding: 15px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    transition: background-color 0.2s ease;
 }
 
 .wpqb-bundle-option:hover {
-    border-color: #2271b1;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    background: #f7fbff;
 }
 
 .wpqb-bundle-option.selected {
-    border-color: #2271b1;
-    border-width: 3px;
-    background: #f0f6fc;
-    box-shadow: 0 4px 12px rgba(34, 113, 177, 0.2);
-    position: relative;
-}
-
-.wpqb-bundle-option.selected::after {
-    content: '✓';
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #2271b1;
-    color: #fff;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 14px;
+    background: #edf5fd;
+    box-shadow: inset 4px 0 0 #2271b1;
 }
 
 .wpqb-bundle-image {
-    margin-bottom: 15px;
-}
-
-.wpqb-bundle-image img {
-    max-width: 100px;
-    max-height: 100px;
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border: 1px solid #ddd;
     border-radius: 4px;
     display: block;
 }
 
-.wpqb-bundle-details {
-    width: 100%;
-}
-
 .wpqb-bundle-name {
-    font-size: 1.2em;
-    font-weight: 700;
-    margin-bottom: 10px;
-    color: #2271b1;
-}
-
-.wpqb-bundle-qty {
-    font-size: 1.1em;
     font-weight: 600;
-    margin-bottom: 8px;
-    color: #333;
+    color: #1d2327;
 }
 
 .wpqb-bundle-price {
-    font-size: 1.2em;
     font-weight: 700;
-    margin-bottom: 8px;
     color: #2271b1;
 }
 
 .wpqb-bundle-price del {
-    color: #999;
+    color: #8a8a8a;
     font-weight: 400;
-    margin-right: 5px;
+    margin-right: 6px;
 }
 
 .wpqb-bundle-price ins {
     text-decoration: none;
-    color: #e74c3c;
-}
-
-.wpqb-per-item-price {
-    font-size: 0.85em;
-    color: #666;
-    margin-bottom: 8px;
-    font-style: italic;
+    color: #d63638;
 }
 
 .wpqb-bundle-savings {
-    font-size: 0.9em;
-    color: #27ae60;
-    font-weight: 600;
-    padding: 5px 10px;
-    background: #eafaf1;
-    border-radius: 3px;
     display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f7a38;
+    background: #e9f9ef;
+    border: 1px solid #cfeedd;
+    border-radius: 3px;
+    padding: 3px 8px;
 }
 
-/* Single column on mobile */
+.wpqb-empty {
+    color: #8a8a8a;
+}
+
 @media (max-width: 768px) {
-    .wpqb-bundles-list {
-        grid-template-columns: 1fr;
+    .wpqb-bundles-table th,
+    .wpqb-bundles-table td {
+        padding: 10px 8px;
+        font-size: 13px;
     }
-    
-    .wpqb-bundle-option {
-        flex-direction: row;
-        text-align: left;
-    }
-    
+
     .wpqb-bundle-image {
-        margin-bottom: 0;
-        margin-right: 15px;
-        flex-shrink: 0;
-    }
-    
-    .wpqb-bundle-image img {
-        max-width: 80px;
-        max-height: 80px;
+        width: 44px;
+        height: 44px;
     }
 }
 
 /* RTL Support */
-[dir="rtl"] .wpqb-bundle-option {
+[dir="rtl"] .wpqb-bundles-table th {
     text-align: right;
 }
 
 [dir="rtl"] .wpqb-bundle-price del {
     margin-right: 0;
-    margin-left: 5px;
-}
-
-@media (max-width: 768px) {
-    [dir="rtl"] .wpqb-bundle-image {
-        margin-right: 0;
-        margin-left: 15px;
-    }
+    margin-left: 6px;
 }
