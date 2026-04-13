@@ -57,9 +57,9 @@
             $('#wpqb-selected-bundle').val(JSON.stringify(selectedBundle));
             
             // Scroll to add to cart button
-            $('html, body').animate({
-                scrollTop: $('.single_add_to_cart_button').offset().top - 100
-            }, 500);
+            // $('html, body').animate({
+            //     scrollTop: $('.single_add_to_cart_button').offset().top - 100
+            // }, 500);
         }
         
         /**

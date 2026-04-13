@@ -11,18 +11,18 @@ class WPQB_Plugin_init
     public function __construct($args = [])
     {
         add_action('admin_menu', [$this, 'admin_menus']);
-        
+
         // Add custom product fields
         add_action('woocommerce_product_options_pricing', [$this, 'add_qty_bundle_fields']);
         add_action('woocommerce_process_product_meta', [$this, 'save_qty_bundle_fields']);
-        
+
         // Enqueue admin scripts and styles
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
-        
+
         // Frontend display
         add_action('woocommerce_before_add_to_cart_button', [$this, 'display_qty_bundles']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
-        
+
         // Cart and Order functionality
         add_filter('woocommerce_add_cart_item_data', [$this, 'add_bundle_to_cart_item'], 10, 2);
         add_filter('woocommerce_get_item_data', [$this, 'display_bundle_in_cart'], 10, 2);
@@ -30,42 +30,44 @@ class WPQB_Plugin_init
         add_action('woocommerce_checkout_create_order_line_item', [$this, 'save_bundle_to_order'], 10, 4);
     }
 
-    public function init() {}
-    
+    public function init()
+    {
+    }
+
     /**
      * Add quantity bundle fields to product pricing tab
      */
     public function add_qty_bundle_fields()
     {
         global $post;
-        
+
         echo '<div class="options_group wpqb-qty-bundles">';
         echo '<h3 style="padding-left: 12px;">' . __('Quantity Price Bundles', 'wpqb') . '</h3>';
-        
+
         // Get existing bundles
         $bundles = get_post_meta($post->ID, '_wpqb_qty_bundles', true);
         if (!is_array($bundles)) {
             $bundles = [];
         }
-        
+
         echo '<div id="wpqb-bundles-container">';
-        
+
         // Display existing bundles only
         if (!empty($bundles)) {
             foreach ($bundles as $index => $bundle) {
                 $this->render_bundle_fields($index, $bundle);
             }
         }
-        
+
         echo '</div>';
-        
+
         echo '<p class="form-field" style="padding-left: 12px;">';
         echo '<button type="button" class="button wpqb-add-bundle">' . __('Add Bundle', 'wpqb') . '</button>';
         echo '</p>';
-        
+
         echo '</div>';
     }
-    
+
     /**
      * Render individual bundle fields
      */
@@ -77,7 +79,7 @@ class WPQB_Plugin_init
         $qty = isset($bundle['qty']) ? $bundle['qty'] : '';
         $image_id = isset($bundle['image_id']) ? $bundle['image_id'] : '';
         $image_url = $image_id ? wp_get_attachment_url($image_id) : '';
-        
+
         ?>
         <div class="wpqb-bundle-item" data-index="<?php echo $index; ?>">
             <div class="wpqb-bundle-header">
@@ -87,55 +89,44 @@ class WPQB_Plugin_init
             <div class="wpqb-bundle-fields">
                 <p class="form-field wpqb-name-field">
                     <label><?php _e('Bundle Name', 'wpqb'); ?></label>
-                    <input type="text" 
-                           name="wpqb_bundles[<?php echo $index; ?>][name]" 
-                           value="<?php echo esc_attr($bundle_name); ?>" 
-                           placeholder="<?php _e('e.g., Starter Pack, Family Bundle', 'wpqb'); ?>" />
+                    <input type="text" name="wpqb_bundles[<?php echo $index; ?>][name]"
+                        value="<?php echo esc_attr($bundle_name); ?>"
+                        placeholder="<?php _e('e.g., Starter Pack, Family Bundle', 'wpqb'); ?>" />
                 </p>
                 <p class="form-field">
                     <label><?php _e('Regular Price', 'wpqb'); ?></label>
-                    <input type="text" 
-                           name="wpqb_bundles[<?php echo $index; ?>][regular_price]" 
-                           value="<?php echo esc_attr($regular_price); ?>" 
-                           placeholder="<?php _e('0.00', 'wpqb'); ?>"
-                           class="short wc_input_price" />
+                    <input type="text" name="wpqb_bundles[<?php echo $index; ?>][regular_price]"
+                        value="<?php echo esc_attr($regular_price); ?>" placeholder="<?php _e('0.00', 'wpqb'); ?>"
+                        class="short wc_input_price" />
                 </p>
                 <p class="form-field">
                     <label><?php _e('Sale Price', 'wpqb'); ?></label>
-                    <input type="text" 
-                           name="wpqb_bundles[<?php echo $index; ?>][sale_price]" 
-                           value="<?php echo esc_attr($sale_price); ?>" 
-                           placeholder="<?php _e('0.00', 'wpqb'); ?>"
-                           class="short wc_input_price" />
+                    <input type="text" name="wpqb_bundles[<?php echo $index; ?>][sale_price]"
+                        value="<?php echo esc_attr($sale_price); ?>" placeholder="<?php _e('0.00', 'wpqb'); ?>"
+                        class="short wc_input_price" />
                 </p>
                 <p class="form-field">
                     <label><?php _e('Quantity', 'wpqb'); ?></label>
-                    <input type="number" 
-                           name="wpqb_bundles[<?php echo $index; ?>][qty]" 
-                           value="<?php echo esc_attr($qty); ?>" 
-                           placeholder="<?php _e('e.g., 10', 'wpqb'); ?>"
-                           min="1"
-                           step="1" />
+                    <input type="number" name="wpqb_bundles[<?php echo $index; ?>][qty]" value="<?php echo esc_attr($qty); ?>"
+                        placeholder="<?php _e('e.g., 10', 'wpqb'); ?>" min="1" step="1" />
                 </p>
                 <p class="form-field wpqb-image-field">
                     <label><?php _e('Bundle Image', 'wpqb'); ?></label>
-                    <div class="wpqb-image-preview">
-                        <?php if ($image_url): ?>
-                            <img src="<?php echo esc_url($image_url); ?>" alt="" style="max-width: 100px; max-height: 100px;" />
-                        <?php endif; ?>
-                    </div>
-                    <input type="hidden" 
-                           name="wpqb_bundles[<?php echo $index; ?>][image_id]" 
-                           class="wpqb-image-id"
-                           value="<?php echo esc_attr($image_id); ?>" />
-                    <button type="button" class="button wpqb-upload-image"><?php _e('Upload Image', 'wpqb'); ?></button>
-                    <button type="button" class="button wpqb-remove-image" <?php echo !$image_url ? 'style="display:none;"' : ''; ?>><?php _e('Remove Image', 'wpqb'); ?></button>
+                <div class="wpqb-image-preview">
+                    <?php if ($image_url): ?>
+                        <img src="<?php echo esc_url($image_url); ?>" alt="" style="max-width: 100px; max-height: 100px;" />
+                    <?php endif; ?>
+                </div>
+                <input type="hidden" name="wpqb_bundles[<?php echo $index; ?>][image_id]" class="wpqb-image-id"
+                    value="<?php echo esc_attr($image_id); ?>" />
+                <button type="button" class="button wpqb-upload-image"><?php _e('Upload Image', 'wpqb'); ?></button>
+                <button type="button" class="button wpqb-remove-image" <?php echo !$image_url ? 'style="display:none;"' : ''; ?>><?php _e('Remove Image', 'wpqb'); ?></button>
                 </p>
             </div>
         </div>
         <?php
     }
-    
+
     /**
      * Save quantity bundle fields
      */
@@ -143,7 +134,7 @@ class WPQB_Plugin_init
     {
         if (isset($_POST['wpqb_bundles']) && is_array($_POST['wpqb_bundles'])) {
             $bundles = [];
-            
+
             foreach ($_POST['wpqb_bundles'] as $bundle) {
                 // Only save bundles that have at least a quantity
                 if (!empty($bundle['qty'])) {
@@ -156,13 +147,13 @@ class WPQB_Plugin_init
                     ];
                 }
             }
-            
+
             update_post_meta($post_id, '_wpqb_qty_bundles', $bundles);
         } else {
             delete_post_meta($post_id, '_wpqb_qty_bundles');
         }
     }
-    
+
     /**
      * Enqueue admin assets
      */
@@ -172,34 +163,34 @@ class WPQB_Plugin_init
         if ('post.php' !== $hook && 'post-new.php' !== $hook) {
             return;
         }
-        
+
         global $post;
         if (!$post || $post->post_type !== 'product') {
             return;
         }
-        
+
         wp_enqueue_media();
         wp_enqueue_style('wpqb-admin-css', wpqb_plugin_plugin_URL . 'assets/css/admin.css', [], wpqb_plugin_info['v']);
         wp_enqueue_script('wpqb-admin-js', wpqb_plugin_plugin_URL . 'assets/js/admin.js', ['jquery'], wpqb_plugin_info['v'], true);
     }
-    
+
     /**
      * Display quantity bundles on product page
      */
     public function display_qty_bundles()
     {
         global $product;
-        
+
         if (!$product) {
             return;
         }
-        
+
         $bundles = get_post_meta($product->get_id(), '_wpqb_qty_bundles', true);
-        
+
         if (!is_array($bundles) || empty($bundles)) {
             return;
         }
-        
+
         echo '<div class="wpqb-bundles-frontend">';
         echo '<h3 class="wpqb-bundles-title">' . __('Quantity Bundles', 'wpqb') . '</h3>';
         echo '<input type="hidden" name="wpqb_selected_bundle" id="wpqb-selected-bundle" value="" />';
@@ -210,34 +201,40 @@ class WPQB_Plugin_init
         echo '<th>' . __('Image', 'wpqb') . '</th>';
         echo '<th>' . __('Bundle', 'wpqb') . '</th>';
         echo '<th>' . __('Quantity', 'wpqb') . '</th>';
-        echo '<th>' . __('Total Price', 'wpqb') . '</th>';
         echo '<th>' . __('Per Item', 'wpqb') . '</th>';
+        echo '<th>' . __('Total Price', 'wpqb') . '</th>';
         echo '<th>' . __('Savings', 'wpqb') . '</th>';
         echo '</tr></thead>';
         echo '<tbody>';
-        
+
         foreach ($bundles as $index => $bundle) {
             $bundle_name = isset($bundle['name']) ? $bundle['name'] : '';
             $qty = isset($bundle['qty']) ? $bundle['qty'] : 0;
             $regular_price = isset($bundle['regular_price']) ? $bundle['regular_price'] : 0;
             $sale_price = isset($bundle['sale_price']) ? $bundle['sale_price'] : 0;
             $image_id = isset($bundle['image_id']) ? $bundle['image_id'] : 0;
-            
+
             if ($qty <= 0) {
                 continue;
             }
-            
-            $display_price = $sale_price > 0 ? $sale_price : $regular_price;
-            $has_sale = $sale_price > 0 && $sale_price < $regular_price;
-            
+
+            $per_item_price = $sale_price > 0 ? $sale_price : $regular_price;
+
+            $total_price = $qty > 0 ? $per_item_price * $qty : 0;
+
+            $total_reg_price = $qty > 0 ? $regular_price * $qty : 0;
+            $total_sale_price = $qty > 0 ? $sale_price * $qty : 0;
+
+            $has_sale = $total_sale_price > 0 && $total_sale_price < $total_reg_price;
+
             echo '<tr class="wpqb-bundle-option" 
                        data-bundle-index="' . esc_attr($index) . '"
                        data-bundle-name="' . esc_attr($bundle_name) . '"
                        data-qty="' . esc_attr($qty) . '" 
-                       data-price="' . esc_attr($display_price) . '"
-                       data-regular-price="' . esc_attr($regular_price) . '"
-                       data-sale-price="' . esc_attr($sale_price) . '">';
-            
+                       data-price="' . esc_attr($total_price) . '"
+                       data-regular-price="' . esc_attr($total_reg_price) . '"
+                       data-sale-price="' . esc_attr($total_sale_price) . '">';
+
             echo '<td class="wpqb-col-image">';
             if ($image_id) {
                 $image_url = wp_get_attachment_image_url($image_id, 'thumbnail');
@@ -248,7 +245,7 @@ class WPQB_Plugin_init
                 echo '<span class="wpqb-empty">-</span>';
             }
             echo '</td>';
-            
+
             echo '<td class="wpqb-col-name">';
             if (!empty($bundle_name)) {
                 echo '<span class="wpqb-bundle-name">' . esc_html($bundle_name) . '</span>';
@@ -256,26 +253,27 @@ class WPQB_Plugin_init
                 echo '<span class="wpqb-bundle-name">' . sprintf(__('Bundle %d', 'wpqb'), $index + 1) . '</span>';
             }
             echo '</td>';
-            
+
             echo '<td class="wpqb-col-qty">' . sprintf(__('%d items', 'wpqb'), $qty) . '</td>';
-            
-            $per_item_price = $qty > 0 ? $display_price / $qty : 0;
-            echo '<td class="wpqb-col-price wpqb-bundle-price">';
-            
-            if ($has_sale) {
-                echo '<del>' . wc_price($regular_price) . '</del> ';
-                echo '<ins>' . wc_price($sale_price) . '</ins>';
-            } else {
-                echo wc_price($regular_price);
-            }
-            echo '</td>';
 
             echo '<td class="wpqb-col-per-item">' . wc_price($per_item_price) . '</td>';
 
+            echo '<td class="wpqb-col-price wpqb-bundle-price">';
+
+            if ($has_sale) {
+                echo '<del>' . wc_price($total_reg_price) . '</del> ';
+                echo '<ins>' . wc_price($total_sale_price) . '</ins>';
+            } else {
+                echo wc_price($total_reg_price);
+            }
+            echo '</td>';
+
+
+
             echo '<td class="wpqb-col-savings">';
             if ($has_sale) {
-                $savings = $regular_price - $sale_price;
-                $savings_percent = round(($savings / $regular_price) * 100);
+                $savings = $total_reg_price - $total_sale_price;
+                $savings_percent = round(($savings / $total_reg_price) * 100);
                 echo '<span class="wpqb-bundle-savings">' . sprintf(__('Save %s (%d%%)', 'wpqb'), wc_price($savings), $savings_percent) . '</span>';
             } else {
                 echo '<span class="wpqb-empty">-</span>';
@@ -283,14 +281,14 @@ class WPQB_Plugin_init
             echo '</td>';
             echo '</tr>';
         }
-        
+
         echo '</tbody>';
         echo '</table>';
         echo '</div>';
         echo '</div>';
         echo '</div>';
     }
-    
+
     /**
      * Enqueue frontend assets
      */
@@ -301,7 +299,7 @@ class WPQB_Plugin_init
             wp_enqueue_script('wpqb-frontend-js', wpqb_plugin_plugin_URL . 'assets/js/frontend.js', ['jquery'], wpqb_plugin_info['v'], true);
         }
     }
-    
+
     /**
      * Add bundle data to cart item
      */
@@ -309,16 +307,16 @@ class WPQB_Plugin_init
     {
         if (isset($_POST['wpqb_selected_bundle']) && !empty($_POST['wpqb_selected_bundle'])) {
             $bundle_data = json_decode(stripslashes($_POST['wpqb_selected_bundle']), true);
-            
+
             if ($bundle_data && is_array($bundle_data)) {
                 $qty = intval($bundle_data['qty']);
                 $total_price = floatval($bundle_data['price']);
                 $total_regular_price = floatval($bundle_data['regular_price']);
                 $total_sale_price = floatval($bundle_data['sale_price']);
-                
+
                 // Calculate per-item price (divide total bundle price by quantity)
                 $per_item_price = $qty > 0 ? $total_price / $qty : $total_price;
-                
+
                 $cart_item_data['wpqb_bundle'] = [
                     'bundle_index' => intval($bundle_data['bundle_index']),
                     'bundle_name' => sanitize_text_field($bundle_data['bundle_name']),
@@ -328,15 +326,15 @@ class WPQB_Plugin_init
                     'total_regular_price' => $total_regular_price,
                     'total_sale_price' => $total_sale_price
                 ];
-                
+
                 // Make cart item unique
                 $cart_item_data['unique_key'] = md5(microtime() . rand());
             }
         }
-        
+
         return $cart_item_data;
     }
-    
+
     /**
      * Display bundle info in cart
      */
@@ -344,25 +342,25 @@ class WPQB_Plugin_init
     {
         if (isset($cart_item['wpqb_bundle'])) {
             $bundle = $cart_item['wpqb_bundle'];
-            
+
             if (!empty($bundle['bundle_name'])) {
                 $item_data[] = [
                     'name' => __('Bundle', 'wpqb'),
                     'value' => esc_html($bundle['bundle_name'])
                 ];
             }
-            
+
             $item_data[] = [
                 'name' => __('Bundle Quantity', 'wpqb'),
                 'value' => esc_html($bundle['qty']) . ' ' . __('items', 'wpqb')
             ];
-            
+
             // Show total bundle price
             $item_data[] = [
                 'name' => __('Bundle Total', 'wpqb'),
                 'value' => wc_price($bundle['total_price'])
             ];
-            
+
             // Show savings if there's a sale price
             if (!empty($bundle['total_sale_price']) && $bundle['total_sale_price'] < $bundle['total_regular_price']) {
                 $savings = $bundle['total_regular_price'] - $bundle['total_sale_price'];
@@ -372,10 +370,10 @@ class WPQB_Plugin_init
                 ];
             }
         }
-        
+
         return $item_data;
     }
-    
+
     /**
      * Update cart item price based on bundle
      */
@@ -384,19 +382,19 @@ class WPQB_Plugin_init
         if (is_admin() && !defined('DOING_AJAX')) {
             return;
         }
-        
+
         foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
             if (isset($cart_item['wpqb_bundle'])) {
                 // Use per-item price so WooCommerce multiplies it by quantity correctly
                 $per_item_price = floatval($cart_item['wpqb_bundle']['per_item_price']);
-                
+
                 if ($per_item_price > 0) {
                     $cart_item['data']->set_price($per_item_price);
                 }
             }
         }
     }
-    
+
     /**
      * Save bundle info to order
      */
@@ -404,22 +402,22 @@ class WPQB_Plugin_init
     {
         if (isset($values['wpqb_bundle'])) {
             $bundle = $values['wpqb_bundle'];
-            
+
             if (!empty($bundle['bundle_name'])) {
                 $item->add_meta_data(__('Bundle', 'wpqb'), $bundle['bundle_name'], true);
             }
-            
+
             $item->add_meta_data(__('Bundle Quantity', 'wpqb'), $bundle['qty'] . ' ' . __('items', 'wpqb'), true);
-            
+
             // Show total bundle price
             $item->add_meta_data(__('Bundle Total', 'wpqb'), wc_price($bundle['total_price']), true);
-            
+
             // Show savings if applicable
             if (!empty($bundle['total_sale_price']) && $bundle['total_sale_price'] < $bundle['total_regular_price']) {
                 $savings = $bundle['total_regular_price'] - $bundle['total_sale_price'];
                 $item->add_meta_data(__('Bundle Savings', 'wpqb'), wc_price($savings), true);
             }
-            
+
             // Save full bundle data for reference
             $item->add_meta_data('_wpqb_bundle_data', $bundle, false);
         }
