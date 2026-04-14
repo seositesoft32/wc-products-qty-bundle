@@ -11,9 +11,9 @@ function wpqb_plugin_has_active_required_plugins($plugin_name = '')
     }
     if (!empty($plugin_name)) {
         if (!empty($plugins[$plugin_name])) {
-            return is_plugin_active($plugins[$plugin_name])  ? true : false;
+            return is_plugin_active($plugins[$plugin_name]) ? true : false;
         } else {
-            return is_plugin_active($plugin_name)  ? true : false;
+            return is_plugin_active($plugin_name) ? true : false;
         }
     }
     if (in_array('no', $_is_valid)) {
@@ -28,13 +28,13 @@ function wpqb_plugin_plugin_admin_notce()
     if (!wpqb_plugin_has_active_required_plugins('woocommerce')) {
         $messages[] = [
             'status' => 'error',
-            'message' =>  __(wpqb_plugin_info['Name'] . " requires <b>WooCommerce</b> to be installed and active.", 'wpqb_plugin'),
+            'message' => __(wpqb_plugin_info['Name'] . " requires <b>WooCommerce</b> to be installed and active.", 'wpqb_plugin'),
         ];
     }
 
     ob_start();
-    if (!empty($messages)) :
-        foreach ($messages as $message) :
+    if (!empty($messages)):
+        foreach ($messages as $message):
             $extra = !empty($message['extra']) ? $message['extra'] : ''; //is-dismissible
             echo '<div class="notice notice-' . $message['status'] . ' ' . $extra . '">';
             echo '<p>';
@@ -48,7 +48,7 @@ function wpqb_plugin_plugin_admin_notce()
     echo $messages_html;
 }
 
-if (wpqb_plugin_has_active_required_plugins()) :
+if (wpqb_plugin_has_active_required_plugins()):
 
     function wpqb_plugin_get_template($template_name, $args = [], $template_path = '', $default_path = '')
     {
@@ -82,7 +82,7 @@ if (wpqb_plugin_has_active_required_plugins()) :
             update_option('wpqb_plugin_setting', $data);
         }
         $settings = get_option('wpqb_plugin_setting', []);
-        return  $settings;
+        return $settings;
     }
 
     function wpqb_plugin_logs($data, $log = 'reports')

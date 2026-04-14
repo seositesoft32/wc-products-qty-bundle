@@ -56,7 +56,7 @@ require_once wpqb_plugin_plugin_PATH . "helper.php";
 
 add_action('admin_notices', 'wpqb_plugin_plugin_admin_notce');
 
-if (wpqb_plugin_has_active_required_plugins()) :
+if (wpqb_plugin_has_active_required_plugins()):
 
     function wpqb_plugin_load_admin_assets()
     {
