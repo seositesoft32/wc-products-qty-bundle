@@ -109,6 +109,23 @@
     color: #fff;
 }
 
+.wpqb-variation-bundles {
+    margin: 12px 0;
+    padding: 12px;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.wpqb-variation-bundles h4 {
+    margin: 0 0 10px;
+    font-size: 13px;
+}
+
+.wpqb-variation-bundles .wpqb-bundle-item {
+    margin-bottom: 10px;
+}
+
 /* Template for new bundles - hidden */
 #wpqb-bundle-template {
     display: none;
@@ -119,7 +136,7 @@
     .wpqb-bundle-fields {
         grid-template-columns: 1fr;
     }
-    
+
     .wpqb-bundle-header {
         flex-direction: column;
         align-items: flex-start;
