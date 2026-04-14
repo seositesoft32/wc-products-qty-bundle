@@ -315,12 +315,16 @@ class WPQB_Plugin_init
 
                 // Calculate per-item price (divide total bundle price by quantity)
                 $per_item_price = $qty > 0 ? $total_price / $qty : $total_price;
+                $per_item_regular_price = $qty > 0 ? $total_regular_price / $qty : $total_regular_price;
+                $per_item_sale_price = $qty > 0 ? $total_sale_price / $qty : $total_sale_price;
 
                 $cart_item_data['wpqb_bundle'] = [
                     'bundle_index' => intval($bundle_data['bundle_index']),
                     'bundle_name' => sanitize_text_field($bundle_data['bundle_name']),
                     'qty' => $qty,
                     'per_item_price' => $per_item_price,
+                    'per_item_regular_price' => $per_item_regular_price,
+                    'per_item_sale_price' => $per_item_sale_price,
                     'total_price' => $total_price,
                     'total_regular_price' => $total_regular_price,
                     'total_sale_price' => $total_sale_price
@@ -353,6 +357,18 @@ class WPQB_Plugin_init
                 'name' => __('Bundle Quantity', 'wpqb'),
                 'value' => esc_html($bundle['qty']) . ' ' . __('items', 'wpqb')
             ];
+
+            $item_data[] = [
+                'name' => __('Per Item Regular Price', 'wpqb'),
+                'value' => wc_price($bundle['per_item_regular_price'])
+            ];
+
+            if (!empty($bundle['per_item_sale_price']) && $bundle['per_item_sale_price'] < $bundle['per_item_regular_price']) {
+                $item_data[] = [
+                    'name' => __('Per Item Sale Price', 'wpqb'),
+                    'value' => wc_price($bundle['per_item_sale_price'])
+                ];
+            }
 
             // Show total bundle price
             $item_data[] = [
@@ -407,6 +423,12 @@ class WPQB_Plugin_init
             }
 
             $item->add_meta_data(__('Bundle Quantity', 'wpqb'), $bundle['qty'] . ' ' . __('items', 'wpqb'), true);
+
+            $item->add_meta_data(__('Per Item Regular Price', 'wpqb'), wc_price($bundle['per_item_regular_price']), true);
+
+            if (!empty($bundle['per_item_sale_price']) && $bundle['per_item_sale_price'] < $bundle['per_item_regular_price']) {
+                $item->add_meta_data(__('Per Item Sale Price', 'wpqb'), wc_price($bundle['per_item_sale_price']), true);
+            }
 
             // Show total bundle price
             $item->add_meta_data(__('Bundle Total', 'wpqb'), wc_price($bundle['total_price']), true);
