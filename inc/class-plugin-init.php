@@ -190,103 +190,102 @@ class WPQB_Plugin_init
         if (!is_array($bundles) || empty($bundles)) {
             return;
         }
+        ?>
+        <div class="wpqb-bundles-frontend">
+            <h3 class="wpqb-bundles-title"><?php _e('Quantity Bundles', 'wpqb'); ?></h3>
+            <input type="hidden" name="wpqb_selected_bundle" id="wpqb-selected-bundle" value="" />
+            <div class="wpqb-bundles-list">
+                <div class="wpqb-bundles-table-wrap">
+                    <table class="wpqb-bundles-table">
+                        <thead>
+                            <tr>
+                                <!-- <th><?php //_e('Image', 'wpqb'); ?></th> -->
+                                <th><?php _e('Bundle', 'wpqb'); ?></th>
+                                <th><?php _e('Quantity', 'wpqb'); ?></th>
+                                <th><?php _e('Per Item', 'wpqb'); ?></th>
+                                <th><?php _e('Total Price', 'wpqb'); ?></th>
+                                <th><?php _e('Savings', 'wpqb'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($bundles as $index => $bundle): ?>
+                                <?php $bundle_name = isset($bundle['name']) ? $bundle['name'] : ''; ?>
+                                <?php $qty = isset($bundle['qty']) ? $bundle['qty'] : 0; ?>
+                                <?php $regular_price = isset($bundle['regular_price']) ? $bundle['regular_price'] : 0; ?>
+                                <?php $sale_price = isset($bundle['sale_price']) ? $bundle['sale_price'] : 0; ?>
+                                <?php $image_id = isset($bundle['image_id']) ? $bundle['image_id'] : 0; ?>
+                                <?php if ($qty <= 0): ?>
+                                    <?php continue; ?>
+                                <?php endif; ?>
 
-        echo '<div class="wpqb-bundles-frontend">';
-        echo '<h3 class="wpqb-bundles-title">' . __('Quantity Bundles', 'wpqb') . '</h3>';
-        echo '<input type="hidden" name="wpqb_selected_bundle" id="wpqb-selected-bundle" value="" />';
-        echo '<div class="wpqb-bundles-list">';
-        echo '<div class="wpqb-bundles-table-wrap">';
-        echo '<table class="wpqb-bundles-table">';
-        echo '<thead><tr>';
-        echo '<th>' . __('Image', 'wpqb') . '</th>';
-        echo '<th>' . __('Bundle', 'wpqb') . '</th>';
-        echo '<th>' . __('Quantity', 'wpqb') . '</th>';
-        echo '<th>' . __('Per Item', 'wpqb') . '</th>';
-        echo '<th>' . __('Total Price', 'wpqb') . '</th>';
-        echo '<th>' . __('Savings', 'wpqb') . '</th>';
-        echo '</tr></thead>';
-        echo '<tbody>';
+                                <?php $per_item_price = $sale_price > 0 ? $sale_price : $regular_price; ?>
+                                <?php $total_price = $qty > 0 ? $per_item_price * $qty : 0; ?>
+                                <?php $total_reg_price = $qty > 0 ? $regular_price * $qty : 0; ?>
+                                <?php $total_sale_price = $qty > 0 ? $sale_price * $qty : 0; ?>
+                                <?php $has_sale = $total_sale_price > 0 && $total_sale_price < $total_reg_price; ?>
 
-        foreach ($bundles as $index => $bundle) {
-            $bundle_name = isset($bundle['name']) ? $bundle['name'] : '';
-            $qty = isset($bundle['qty']) ? $bundle['qty'] : 0;
-            $regular_price = isset($bundle['regular_price']) ? $bundle['regular_price'] : 0;
-            $sale_price = isset($bundle['sale_price']) ? $bundle['sale_price'] : 0;
-            $image_id = isset($bundle['image_id']) ? $bundle['image_id'] : 0;
+                                <?php $bundle_name_h = ($bundle_name) ? esc_html($bundle_name) : sprintf(__('Bundle %d', 'wpqb'), $index + 1) ?>
 
-            if ($qty <= 0) {
-                continue;
-            }
-
-            $per_item_price = $sale_price > 0 ? $sale_price : $regular_price;
-
-            $total_price = $qty > 0 ? $per_item_price * $qty : 0;
-
-            $total_reg_price = $qty > 0 ? $regular_price * $qty : 0;
-            $total_sale_price = $qty > 0 ? $sale_price * $qty : 0;
-
-            $has_sale = $total_sale_price > 0 && $total_sale_price < $total_reg_price;
-
-            echo '<tr class="wpqb-bundle-option" 
-                       data-bundle-index="' . esc_attr($index) . '"
-                       data-bundle-name="' . esc_attr($bundle_name) . '"
-                       data-qty="' . esc_attr($qty) . '" 
-                       data-price="' . esc_attr($total_price) . '"
-                       data-regular-price="' . esc_attr($total_reg_price) . '"
-                       data-sale-price="' . esc_attr($total_sale_price) . '">';
-
-            echo '<td class="wpqb-col-image">';
-            if ($image_id) {
-                $image_url = wp_get_attachment_image_url($image_id, 'thumbnail');
-                if ($image_url) {
-                    echo '<img class="wpqb-bundle-image" src="' . esc_url($image_url) . '" alt="' . esc_attr($bundle_name ? $bundle_name : sprintf(__('Bundle of %d', 'wpqb'), $qty)) . '" />';
-                }
-            } else {
-                echo '<span class="wpqb-empty">-</span>';
-            }
-            echo '</td>';
-
-            echo '<td class="wpqb-col-name">';
-            if (!empty($bundle_name)) {
-                echo '<span class="wpqb-bundle-name">' . esc_html($bundle_name) . '</span>';
-            } else {
-                echo '<span class="wpqb-bundle-name">' . sprintf(__('Bundle %d', 'wpqb'), $index + 1) . '</span>';
-            }
-            echo '</td>';
-
-            echo '<td class="wpqb-col-qty">' . sprintf(__('%d items', 'wpqb'), $qty) . '</td>';
-
-            echo '<td class="wpqb-col-per-item">' . wc_price($per_item_price) . '</td>';
-
-            echo '<td class="wpqb-col-price wpqb-bundle-price">';
-
-            if ($has_sale) {
-                echo '<del>' . wc_price($total_reg_price) . '</del> ';
-                echo '<ins>' . wc_price($total_sale_price) . '</ins>';
-            } else {
-                echo wc_price($total_reg_price);
-            }
-            echo '</td>';
+                                <?php $bundle_img = '<span class="wpqb-empty">-</span>'; ?>
+                                <?php if ($image_id): ?>
+                                    <?php $image_url = wp_get_attachment_image_url($image_id, 'thumbnail'); ?>
+                                    <?php if ($image_url): ?>
+                                        <?php $bundle_img = '<img class="wpqb-bundle-image" src="' . esc_url($image_url) . '" alt="' . esc_attr($bundle_name_h) . '" />'; ?>
+                                    <?php endif; ?>
+                                <?php endif; ?>
 
 
+                                <?php $bundle_total_price_h = wc_price($total_reg_price); ?>
+                                <?php if ($has_sale): ?>
+                                    <?php $bundle_total_price_h = '<del>' . wc_price($total_reg_price) . '</del>'; ?>
+                                    <?php $bundle_total_price_h .= '<ins>' . wc_price($total_sale_price) . '</ins>'; ?>
+                                <?php endif; ?>
 
-            echo '<td class="wpqb-col-savings">';
-            if ($has_sale) {
-                $savings = $total_reg_price - $total_sale_price;
-                $savings_percent = round(($savings / $total_reg_price) * 100);
-                echo '<span class="wpqb-bundle-savings">' . sprintf(__('Save %s (%d%%)', 'wpqb'), wc_price($savings), $savings_percent) . '</span>';
-            } else {
-                echo '<span class="wpqb-empty">-</span>';
-            }
-            echo '</td>';
-            echo '</tr>';
-        }
+                                <tr class="wpqb-bundle-option" data-bundle-index="<?php echo esc_attr($index); ?>"
+                                    data-bundle-name="<?php echo esc_attr($bundle_name); ?>"
+                                    data-qty="<?php echo esc_attr($qty); ?>" data-price="<?php echo esc_attr($total_price); ?>"
+                                    data-regular-price="<?php echo esc_attr($total_reg_price); ?>"
+                                    data-sale-price="<?php echo esc_attr($total_sale_price); ?>">
 
-        echo '</tbody>';
-        echo '</table>';
-        echo '</div>';
-        echo '</div>';
-        echo '</div>';
+                                    <!-- <td class=" wpqb-col-image">
+                                        <?php //echo $bundle_img; ?>
+                                    </td> -->
+
+                                    <td class="wpqb-col-name">
+                                        <span class="wpqb-bundle-name"><?php echo $bundle_name_h; ?></span>
+                                    </td>
+
+                                    <td class="wpqb-col-qty">
+                                        <?php echo sprintf(__('%d items', 'wpqb'), $qty); ?>
+                                    </td>
+
+                                    <td class="wpqb-col-per-item">
+                                        <?php echo wc_price($per_item_price); ?>
+                                    </td>
+
+                                    <td class="wpqb-col-price wpqb-bundle-price">
+                                        <?php echo $bundle_total_price_h; ?>
+                                    </td>
+                                    <td class="wpqb-col-savings">
+                                        <?php if ($has_sale): ?>
+                                            <?php $savings = $total_reg_price - $total_sale_price; ?>
+                                            <?php $savings_percent = round(($savings / $total_reg_price) * 100); ?>
+                                            <span class="wpqb-bundle-savings">
+                                                <?php echo sprintf(__('Save %s (%d%%)', 'wpqb'), wc_price($savings), $savings_percent); ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="wpqb-empty">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php
     }
 
     /**
