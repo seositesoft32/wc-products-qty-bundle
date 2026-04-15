@@ -95,6 +95,7 @@ class WPQB_Plugin_init
         <div class="wpqb-bundle-item" data-index="<?php echo $index; ?>">
             <div class="wpqb-bundle-header">
                 <h4><?php echo sprintf(__('Bundle #%d', 'wpqb'), $index + 1); ?></h4>
+                <span class="wpqb-bundle-total-price"></span>
                 <button type="button" class="button wpqb-remove-bundle"><?php _e('Remove', 'wpqb'); ?></button>
             </div>
             <div class="wpqb-bundle-fields">
@@ -315,7 +316,7 @@ class WPQB_Plugin_init
                                         <?php continue; ?>
                                     <?php endif; ?>
 
-                                    <?php $per_item_price = $sale_price > 0 ? $sale_price : $regular_price; ?>
+                                    <?php $per_item_price = ($sale_price > 0 && $sale_price < $regular_price) ? $sale_price : $regular_price; ?>
                                     <?php $total_price = $qty > 0 ? $per_item_price * $qty : 0; ?>
                                     <?php $total_reg_price = $qty > 0 ? $regular_price * $qty : 0; ?>
                                     <?php $total_sale_price = $qty > 0 ? $sale_price * $qty : 0; ?>

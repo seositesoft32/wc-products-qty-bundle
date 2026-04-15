@@ -38,6 +38,14 @@
     font-weight: 600;
 }
 
+.wpqb-bundle-total-price {
+    color: #2271b1;
+    font-weight: 600;
+    font-size: 12px;
+    margin-left: auto;
+    margin-right: 12px;
+}
+
 .wpqb-remove-bundle {
     color: #a00;
     border-color: #a00;

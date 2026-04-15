@@ -63,6 +63,10 @@
     border-left: 1px solid #ececec;
 }
 
+.wpqb-bundles-table .wpqb-bundle-option.selected td:first-child {
+    border-left: 1px solid #005284;
+}
+
 .wpqb-bundles-table td:last-child {
     border-right: 1px solid #ececec;
 }
@@ -89,7 +93,7 @@
 
 .wpqb-bundle-option.selected {
     background: #edf5fd;
-    box-shadow: inset 4px 0 0 #2271b1;
+    box-shadow: inset 3px 0 0 #005284;
 }
 
 .wpqb-bundle-image {
