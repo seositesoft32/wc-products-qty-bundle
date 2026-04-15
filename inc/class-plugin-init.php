@@ -318,8 +318,8 @@ class WPQB_Plugin_init
 
                                     <?php $per_item_price = ($sale_price > 0 && $sale_price < $regular_price) ? $sale_price : $regular_price; ?>
                                     <?php $total_price = $qty > 0 ? $per_item_price * $qty : 0; ?>
-                                    <?php $total_reg_price = $qty > 0 ? $regular_price * $qty : 0; ?>
-                                    <?php $total_sale_price = $qty > 0 ? $sale_price * $qty : 0; ?>
+                                    <?php $total_reg_price = $qty > 0 && $regular_price > 0 ? $regular_price * $qty : 0; ?>
+                                    <?php $total_sale_price = $qty > 0 && $sale_price > 0 ? $sale_price * $qty : 0; ?>
                                     <?php $has_sale = $total_sale_price > 0 && $total_sale_price < $total_reg_price; ?>
 
                                     <?php $bundle_name_h = ($bundle_name) ? esc_html($bundle_name) : sprintf(__('Bundle %d', 'wpqb'), $index + 1) ?>
