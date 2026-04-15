@@ -62,6 +62,53 @@
             }
         }
 
+        function getCurrentCartQty() {
+            const qty = parseInt($('form.cart input.qty').first().val(), 10);
+            return Number.isFinite(qty) && qty > 0 ? qty : 0;
+        }
+
+        function sortBundleRowsByQty() {
+            if (!$bundleTableBody.length) {
+                return;
+            }
+
+            const rows = $bundleTableBody.find('tr.wpqb-bundle-option').get();
+            rows.sort(function (a, b) {
+                const aQty = parseInt($(a).data('qty'), 10) || 0;
+                const bQty = parseInt($(b).data('qty'), 10) || 0;
+                return aQty - bQty;
+            });
+
+            $.each(rows, function (_, row) {
+                $bundleTableBody.append(row);
+            });
+        }
+
+        function selectBundleByQty(qty) {
+            const currentQty = parseInt(qty, 10) || 0;
+            const $rows = $('.wpqb-bundle-option');
+
+            if (currentQty <= 0 || !$rows.length) {
+                deselectBundle();
+                return;
+            }
+
+            let $matched = null;
+
+            $rows.each(function () {
+                const tierQty = parseInt($(this).data('qty'), 10) || 0;
+                if (tierQty > 0 && currentQty >= tierQty) {
+                    $matched = $(this);
+                }
+            });
+
+            if ($matched && $matched.length) {
+                selectBundle($matched, false);
+            } else {
+                deselectBundle();
+            }
+        }
+
         function escapeHtml(value) {
             return String(value || '')
                 .replace(/&/g, '&amp;')
@@ -76,7 +123,12 @@
                 return;
             }
 
-            const rows = Array.isArray(bundles) ? bundles : [];
+            const rows = Array.isArray(bundles) ? bundles.slice() : [];
+            rows.sort(function (a, b) {
+                const aQty = parseInt(a.qty, 10) || 0;
+                const bQty = parseInt(b.qty, 10) || 0;
+                return aQty - bQty;
+            });
             const currencySymbol = getCurrencySymbol(getActivePriceElement());
 
             if (!rows.length) {
@@ -128,6 +180,7 @@
             });
 
             $bundleTableBody.html(html);
+            sortBundleRowsByQty();
             if ($bundlePlaceholder.length) {
                 $bundlePlaceholder.hide();
             }
@@ -142,6 +195,7 @@
 
                 deselectBundle();
                 renderVariationBundles(variation && variation.wpqb_bundles ? variation.wpqb_bundles : []);
+                selectBundleByQty(getCurrentCartQty());
             });
 
             $variationForm.on('reset_data hide_variation', function () {
@@ -167,13 +221,13 @@
             }
 
             // Select new bundle
-            selectBundle($this);
+            selectBundle($this, false);
         });
 
         /**
          * Select a bundle
          */
-        function selectBundle($bundle) {
+        function selectBundle($bundle, setQtyInput) {
             // Remove previous selection
             $('.wpqb-bundle-option').removeClass('selected');
             $bundle.addClass('selected');
@@ -188,7 +242,9 @@
                 sale_price: parseFloat($bundle.data('sale-price'))
             };
 
-            syncBundleQty();
+            if (setQtyInput) {
+                syncBundleQty();
+            }
 
             // Update custom bundle summary (do not override Woo price)
             updateSelectedBundleTotalDisplay();
@@ -209,12 +265,6 @@
             $('.wpqb-bundle-option').removeClass('selected');
             selectedBundle = null;
 
-            // Reset quantity to 1
-            const $qtyInput = $('form.cart input.qty').first();
-            if ($qtyInput.length) {
-                $qtyInput.val(1).trigger('change');
-            }
-
             updateSelectedBundleTotalDisplay();
 
             syncSelectedBundleField();
@@ -233,15 +283,17 @@
                 return;
             }
 
-            const qty = parseInt(selectedBundle.qty, 10) || 0;
-            const totalPrice = parseFloat(selectedBundle.price) || 0;
+            const tierQty = parseInt(selectedBundle.qty, 10) || 0;
+            const tierTotalPrice = parseFloat(selectedBundle.price) || 0;
+            const qty = getCurrentCartQty();
 
-            if (qty <= 0) {
+            if (qty <= 0 || tierQty <= 0) {
                 $selectedTotal.hide().text('');
                 return;
             }
 
-            const itemPrice = totalPrice / qty;
+            const itemPrice = tierTotalPrice / tierQty;
+            const totalPrice = itemPrice * qty;
             const text = `${formatPrice(itemPrice)} x ${qty}: ${formatPrice(totalPrice)}`;
 
             $selectedTotal.html(text).show();
@@ -291,11 +343,11 @@
 
         // Handle quantity changes to update total price display
         $(document).on('change', 'input.qty', function () {
-            if (selectedBundle) {
-                // You can add logic here to show total price (bundle price × quantity)
-                // For now, WooCommerce will handle this in the cart
-            }
+            selectBundleByQty(getCurrentCartQty());
         });
+
+        sortBundleRowsByQty();
+        selectBundleByQty(getCurrentCartQty());
     });
 
 })(jQuery);
