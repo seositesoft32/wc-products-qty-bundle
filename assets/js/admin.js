@@ -145,30 +145,14 @@
                     <button type="button" class="button wpqb-remove-bundle">Remove</button>
                 </div>
                 <div class="wpqb-bundle-fields">
-                    <p class="form-field wpqb-name-field">
+                    <p class="wpqb-form-field wpqb-name-field">
                         <label>Bundle Name</label>
                         <input type="text" 
                                name="${namePrefix}[${index}][name]" 
                                value="" 
                                placeholder="e.g., Starter Pack, Family Bundle" />
                     </p>
-                    <p class="form-field">
-                        <label>Regular Price</label>
-                        <input type="text" 
-                               name="${namePrefix}[${index}][regular_price]" 
-                               value="" 
-                               placeholder="0.00"
-                               class="short wc_input_price" />
-                    </p>
-                    <p class="form-field">
-                        <label>Sale Price</label>
-                        <input type="text" 
-                               name="${namePrefix}[${index}][sale_price]" 
-                               value="" 
-                               placeholder="0.00"
-                               class="short wc_input_price" />
-                    </p>
-                    <p class="form-field">
+                     <p class="wpqb-form-field">
                         <label>Quantity</label>
                         <input type="number" 
                                name="${namePrefix}[${index}][qty]" 
@@ -177,19 +161,36 @@
                                min="1"
                                step="1" />
                     </p>
-                    <p class="form-field wpqb-image-field">
-                        <label>Bundle Image</label>
-                        <div class="wpqb-image-preview"></div>
-                        <input type="hidden" 
-                               name="${namePrefix}[${index}][image_id]" 
-                               class="wpqb-image-id"
-                               value="" />
-                        <button type="button" class="button wpqb-upload-image">Upload Image</button>
-                        <button type="button" class="button wpqb-remove-image" style="display:none;">Remove Image</button>
+                    <p class="wpqb-form-field">
+                        <label>Regular Price</label>
+                        <input type="text" 
+                               name="${namePrefix}[${index}][regular_price]" 
+                               value="" 
+                               placeholder="0.00"
+                               class="short wc_input_price" />
+                    </p>
+                    <p class="wpqb-form-field">
+                        <label>Sale Price</label>
+                        <input type="text" 
+                               name="${namePrefix}[${index}][sale_price]" 
+                               value="" 
+                               placeholder="0.00"
+                               class="short wc_input_price" />
                     </p>
                 </div>
-            </div>
-        `;
+            </div>`;
+
+
+        // <p class="wpqb-form-field wpqb-image-field">
+        //     <label>Bundle Image</label>
+        //     <div class="wpqb-image-preview"></div>
+        //     <input type="hidden" 
+        //            name="${namePrefix}[${index}][image_id]" 
+        //            class="wpqb-image-id"
+        //            value="" />
+        //     <button type="button" class="button wpqb-upload-image">Upload Image</button>
+        //     <button type="button" class="button wpqb-remove-image" style="display:none;">Remove Image</button>
+        // </p>
     }
 
     /**

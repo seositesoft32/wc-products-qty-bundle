@@ -72,7 +72,7 @@ class WPQB_Plugin_init
 
         echo '</div>';
 
-        echo '<p class="form-field" style="padding-left: 12px;">';
+        echo '<p class="wpqb-form-field" style="padding-left: 12px;">';
         echo '<button type="button" class="button wpqb-add-bundle">' . __('Add Bundle', 'wpqb') . '</button>';
         echo '</p>';
 
@@ -98,41 +98,43 @@ class WPQB_Plugin_init
                 <button type="button" class="button wpqb-remove-bundle"><?php _e('Remove', 'wpqb'); ?></button>
             </div>
             <div class="wpqb-bundle-fields">
-                <p class="form-field wpqb-name-field">
+                <p class="wpqb-form-field wpqb-name-field">
                     <label><?php _e('Bundle Name', 'wpqb'); ?></label>
                     <input type="text" name="<?php echo esc_attr($name_prefix); ?>[<?php echo $index; ?>][name]"
                         value="<?php echo esc_attr($bundle_name); ?>"
                         placeholder="<?php _e('e.g., Starter Pack, Family Bundle', 'wpqb'); ?>" />
                 </p>
-                <p class="form-field">
+                <p class="wpqb-form-field">
+                    <label>
+                        <?php _e('Quantity', 'wpqb'); ?>
+                    </label>
+                    <input type="number" name="<?php echo esc_attr($name_prefix); ?>[<?php echo $index; ?>][qty]"
+                        value="<?php echo esc_attr($qty); ?>" placeholder="<?php _e('e.g., 10', 'wpqb'); ?>" min="1" step="1" />
+                </p>
+                <p class="wpqb-form-field">
                     <label><?php _e('Regular Price', 'wpqb'); ?></label>
                     <input type="text" name="<?php echo esc_attr($name_prefix); ?>[<?php echo $index; ?>][regular_price]"
                         value="<?php echo esc_attr($regular_price); ?>" placeholder="<?php _e('0.00', 'wpqb'); ?>"
                         class="short wc_input_price" />
                 </p>
-                <p class="form-field">
+                <p class="wpqb-form-field">
                     <label><?php _e('Sale Price', 'wpqb'); ?></label>
                     <input type="text" name="<?php echo esc_attr($name_prefix); ?>[<?php echo $index; ?>][sale_price]"
                         value="<?php echo esc_attr($sale_price); ?>" placeholder="<?php _e('0.00', 'wpqb'); ?>"
                         class="short wc_input_price" />
                 </p>
-                <p class="form-field">
-                    <label><?php _e('Quantity', 'wpqb'); ?></label>
-                    <input type="number" name="<?php echo esc_attr($name_prefix); ?>[<?php echo $index; ?>][qty]"
-                        value="<?php echo esc_attr($qty); ?>" placeholder="<?php _e('e.g., 10', 'wpqb'); ?>" min="1" step="1" />
-                </p>
-                <p class="form-field wpqb-image-field">
-                    <label><?php _e('Bundle Image', 'wpqb'); ?></label>
+                <!-- <p class="wpqb-form-field wpqb-image-field">
+                    <label><?php //_e('Bundle Image', 'wpqb'); ?></label>
                 <div class="wpqb-image-preview">
-                    <?php if ($image_url): ?>
-                        <img src="<?php echo esc_url($image_url); ?>" alt="" style="max-width: 100px; max-height: 100px;" />
-                    <?php endif; ?>
+                    <?php //if ($image_url): ?>
+                        <img src="<?php //echo esc_url($image_url); ?>" alt="" style="max-width: 100px; max-height: 100px;" />
+                    <?php //endif; ?>
                 </div>
-                <input type="hidden" name="<?php echo esc_attr($name_prefix); ?>[<?php echo $index; ?>][image_id]"
-                    class="wpqb-image-id" value="<?php echo esc_attr($image_id); ?>" />
-                <button type="button" class="button wpqb-upload-image"><?php _e('Upload Image', 'wpqb'); ?></button>
-                <button type="button" class="button wpqb-remove-image" <?php echo !$image_url ? 'style="display:none;"' : ''; ?>><?php _e('Remove Image', 'wpqb'); ?></button>
-                </p>
+                <input type="hidden" name="<?php //echo esc_attr($name_prefix); ?>[<?php //echo $index; ?>][image_id]"
+                    class="wpqb-image-id" value="<?php //echo esc_attr($image_id); ?>" />
+                <button type="button" class="button wpqb-upload-image"><?php //_e('Upload Image', 'wpqb'); ?></button>
+                <button type="button" class="button wpqb-remove-image" <?php //echo !$image_url ? 'style="display:none;"' : ''; ?>><?php _e('Remove Image', 'wpqb'); ?></button>
+                </p> -->
             </div>
         </div>
         <?php
