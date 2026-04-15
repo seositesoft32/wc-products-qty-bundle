@@ -221,7 +221,7 @@
             }
 
             // Select new bundle
-            selectBundle($this, false);
+            selectBundle($this, true);
         });
 
         /**
