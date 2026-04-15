@@ -24,6 +24,13 @@
     padding: 0px 15px 15px 15px;
 }
 
+.wpqb-selected-total {
+    margin: 12px 0 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1d2327;
+}
+
 .wpqb-bundles-table-wrap {
     overflow-x: auto;
 }

@@ -11,6 +11,7 @@
         const isVariableProduct = $variationForm.length > 0;
         const $bundleTableBody = $('.wpqb-bundles-table tbody');
         const $bundlePlaceholder = $('.wpqb-bundles-placeholder');
+        const $selectedTotal = $('#wpqb-selected-total');
         const $defaultPriceElement = $('.summary .price').first();
         const defaultPriceHTML = $defaultPriceElement.length ? $defaultPriceElement.html() : '';
         let selectedVariationId = 0;
@@ -189,8 +190,8 @@
 
             syncBundleQty();
 
-            // Update price display
-            updatePriceDisplay();
+            // Update custom bundle summary (do not override Woo price)
+            updateSelectedBundleTotalDisplay();
 
             // Store bundle data in hidden field
             syncSelectedBundleField();
@@ -214,49 +215,36 @@
                 $qtyInput.val(1).trigger('change');
             }
 
-            const $activePriceElement = getActivePriceElement();
-            if (isVariableProduct && variationPriceHTML && $activePriceElement.length) {
-                $activePriceElement.html(variationPriceHTML);
-            } else if (defaultPriceHTML && $activePriceElement.length) {
-                $activePriceElement.html(defaultPriceHTML);
-            }
+            updateSelectedBundleTotalDisplay();
 
             syncSelectedBundleField();
         }
 
         /**
-         * Update price display on product page
+         * Update selected bundle total summary below table
          */
-        function updatePriceDisplay() {
-            if (!selectedBundle) return;
-
-            const price = selectedBundle.price;
-            const regularPrice = selectedBundle.regular_price;
-            const salePrice = selectedBundle.sale_price;
-            const hasSale = salePrice > 0 && salePrice < regularPrice;
-
-            let priceHTML = '';
-            const $activePriceElement = getActivePriceElement();
-
-            if (!$activePriceElement.length) {
+        function updateSelectedBundleTotalDisplay() {
+            if (!$selectedTotal.length) {
                 return;
             }
 
-            if (hasSale) {
-                // Format with currency
-                const currencySymbol = getCurrencySymbol($activePriceElement);
-                const formattedRegular = formatPrice(regularPrice);
-                const formattedSale = formatPrice(salePrice);
-
-                priceHTML = `<del><span class="woocommerce-Price-amount amount">${formattedRegular}</span></del> `;
-                priceHTML += `<ins><span class="woocommerce-Price-amount amount">${formattedSale}</span></ins>`;
-            } else {
-                const currencySymbol = getCurrencySymbol($activePriceElement);
-                const formattedPrice = formatPrice(price);
-                priceHTML = `<span class="woocommerce-Price-amount amount">${formattedPrice}</span>`;
+            if (!selectedBundle || !selectedBundle.qty) {
+                $selectedTotal.hide().text('');
+                return;
             }
 
-            $activePriceElement.html(priceHTML);
+            const qty = parseInt(selectedBundle.qty, 10) || 0;
+            const totalPrice = parseFloat(selectedBundle.price) || 0;
+
+            if (qty <= 0) {
+                $selectedTotal.hide().text('');
+                return;
+            }
+
+            const itemPrice = totalPrice / qty;
+            const text = `${formatPrice(itemPrice)} x ${qty}: ${formatPrice(totalPrice)}`;
+
+            $selectedTotal.html(text).show();
         }
 
         /**

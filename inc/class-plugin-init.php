@@ -380,6 +380,7 @@ class WPQB_Plugin_init
                 </div>
             </div>
         </div>
+        <p class="wpqb-selected-total" id="wpqb-selected-total" style="display:none;"></p>
         <?php
     }
 
