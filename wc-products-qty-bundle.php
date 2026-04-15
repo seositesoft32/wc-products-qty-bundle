@@ -3,8 +3,8 @@
 /**
  * Plugin Name:       WC Products Qty Bundle
  * Plugin URI:        #
- * Description:       A custom solution
- * Version:           1.0
+ * Description:       Adds quantity-based bundle pricing for WooCommerce products and variations, with bundle selection on product pages and automatic cart/order pricing.
+ * Version:           2.0
  * Author:            SeoSiteSoft
  * Author URI:        #
  * Requires at least: 5.9
