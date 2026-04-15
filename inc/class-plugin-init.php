@@ -292,10 +292,10 @@ class WPQB_Plugin_init
                             <tr>
                                 <!-- <th><?php //_e('Image', 'wpqb'); ?></th> -->
                                 <th><?php _e('Bundle', 'wpqb'); ?></th>
-                                <th><?php _e('Qty', 'wpqb'); ?></th>
+                                <!-- <th><?php //_e('Qty', 'wpqb'); ?></th> -->
                                 <th><?php _e('Per Item', 'wpqb'); ?></th>
                                 <th><?php _e('Total Price', 'wpqb'); ?></th>
-                                <th><?php _e('Savings', 'wpqb'); ?></th>
+                                <!-- <th><?php //_e('Savings', 'wpqb'); ?></th> -->
                             </tr>
                         </thead>
                         <tbody>
@@ -331,7 +331,7 @@ class WPQB_Plugin_init
 
 
                                     <?php $bundle_total_price_h = wc_price($total_reg_price); ?>
-                                    <?php $bundle_savings_h = '<span class="wpqb-empty">-</span>'; ?>
+                                    <?php $bundle_savings_h = '';//'<span class="wpqb-empty">-</span>'; ?>
 
                                     <?php if ($has_sale): ?>
                                         <?php $bundle_total_price_h = '<del>' . wc_price($total_reg_price) . '</del>'; ?>
@@ -339,7 +339,7 @@ class WPQB_Plugin_init
 
                                         <?php $savings = $total_reg_price - $total_sale_price; ?>
                                         <?php $savings_percent = round(($savings / $total_reg_price) * 100); ?>
-                                        <?php $bundle_savings_h = sprintf(__('<span class="wpqb-bundle-savings">Save %s (%d%%)</span>', 'wpqb'), wc_price($savings), $savings_percent); ?>
+                                        <?php $bundle_savings_h = sprintf(__('<br><span class="wpqb-bundle-savings">Save %s (%d%%)</span>', 'wpqb'), wc_price($savings), $savings_percent); ?>
                                     <?php endif; ?>
 
                                     <tr class="wpqb-bundle-option" data-bundle-index="<?php echo esc_attr($index); ?>"
@@ -354,22 +354,23 @@ class WPQB_Plugin_init
 
                                         <td class="wpqb-col-name">
                                             <span class="wpqb-bundle-name"><?php echo $bundle_name_h; ?></span>
+                                            <?php echo $bundle_savings_h; ?>
                                         </td>
 
-                                        <td class="wpqb-col-qty">
-                                            <?php echo sprintf(__('%d items', 'wpqb'), $qty); ?>
-                                        </td>
+                                        <!-- <td class="wpqb-col-qty">
+                                            <?php //echo sprintf(__('%d items', 'wpqb'), $qty); ?>
+                                        </td> -->
 
                                         <td class="wpqb-col-per-item">
-                                            <?php echo wc_price($per_item_price); ?>
+                                            <?php echo sprintf(__('%s x %d', 'wpqb'), wc_price($per_item_price), $qty); ?>
                                         </td>
 
                                         <td class="wpqb-col-price wpqb-bundle-price">
                                             <?php echo $bundle_total_price_h; ?>
                                         </td>
-                                        <td class="wpqb-col-savings">
-                                            <?php echo $bundle_savings_h; ?>
-                                        </td>
+                                        <!-- <td class="wpqb-col-savings">
+                                            <?php //echo $bundle_savings_h; ?>
+                                        </td> -->
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>

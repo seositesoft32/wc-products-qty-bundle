@@ -97,14 +97,14 @@
                 const bundleName = bundle.bundle_name ? bundle.bundle_name : ('Bundle ' + (index + 1));
 
                 const priceHtml = hasSale
-                    ? `<del>${currencySymbol}${formatPrice(totalRegularPrice)}</del><ins>${currencySymbol}${formatPrice(totalSalePrice)}</ins>`
-                    : `${currencySymbol}${formatPrice(totalRegularPrice)}`;
+                    ? `<del>${formatPrice(totalRegularPrice)}</del><ins>${formatPrice(totalSalePrice)}</ins>`
+                    : `${formatPrice(totalRegularPrice)}`;
 
                 let savingsHtml = '<span class="wpqb-empty">-</span>';
                 if (hasSale && totalRegularPrice > 0) {
                     const savings = totalRegularPrice - totalSalePrice;
                     const savingsPercent = Math.round((savings / totalRegularPrice) * 100);
-                    savingsHtml = `<span class="wpqb-bundle-savings">Save ${currencySymbol}${formatPrice(savings)} (${savingsPercent}%)</span>`;
+                    savingsHtml = `<span class="wpqb-bundle-savings">Save ${formatPrice(savings)} (${savingsPercent}%)</span>`;
                 }
 
                 html += `<tr class="wpqb-bundle-option"
@@ -114,12 +114,16 @@
                             data-price="${totalPrice}"
                             data-regular-price="${totalRegularPrice}"
                             data-sale-price="${totalSalePrice}">
-                            <td class="wpqb-col-name"><span class="wpqb-bundle-name">${escapeHtml(bundleName)}</span></td>
-                            <td class="wpqb-col-qty">${qty} items</td>
-                            <td class="wpqb-col-per-item">${currencySymbol}${formatPrice(perItemPrice)}</td>
+                            <td class="wpqb-col-name">
+                                <span class="wpqb-bundle-name">${escapeHtml(bundleName)}</span>
+                                <br>
+                                ${savingsHtml}
+                            </td>
+                            <td class="wpqb-col-per-item"> ${formatPrice(perItemPrice)} x ${qty}</td>
                             <td class="wpqb-col-price wpqb-bundle-price">${priceHtml}</td>
-                            <td class="wpqb-col-savings">${savingsHtml}</td>
                         </tr>`;
+                // <td class="wpqb-col-qty">${qty} items</td>
+                // <td class="wpqb-col-savings">${savingsHtml}</td>
             });
 
             $bundleTableBody.html(html);
@@ -244,12 +248,12 @@
                 const formattedRegular = formatPrice(regularPrice);
                 const formattedSale = formatPrice(salePrice);
 
-                priceHTML = `<del><span class="woocommerce-Price-amount amount">${currencySymbol}${formattedRegular}</span></del> `;
-                priceHTML += `<ins><span class="woocommerce-Price-amount amount">${currencySymbol}${formattedSale}</span></ins>`;
+                priceHTML = `<del><span class="woocommerce-Price-amount amount">${formattedRegular}</span></del> `;
+                priceHTML += `<ins><span class="woocommerce-Price-amount amount">${formattedSale}</span></ins>`;
             } else {
                 const currencySymbol = getCurrencySymbol($activePriceElement);
                 const formattedPrice = formatPrice(price);
-                priceHTML = `<span class="woocommerce-Price-amount amount">${currencySymbol}${formattedPrice}</span>`;
+                priceHTML = `<span class="woocommerce-Price-amount amount">${formattedPrice}</span>`;
             }
 
             $activePriceElement.html(priceHTML);
@@ -260,14 +264,16 @@
          */
         function getCurrencySymbol($priceElement) {
             const priceText = $priceElement.find('.woocommerce-Price-currencySymbol').first().text();
-            return priceText || '$';
+            let currencySymbol = priceText || '$';
+            return `<span class="woocommerce-Price-currencySymbol">${currencySymbol}</span>`;
         }
 
         /**
          * Format price with decimals
          */
         function formatPrice(price) {
-            return parseFloat(price).toFixed(2);
+            let curSymbol = getCurrencySymbol(getActivePriceElement());
+            return curSymbol + parseFloat(price).toFixed(2);
         }
 
         /**

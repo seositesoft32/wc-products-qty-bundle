@@ -2,23 +2,26 @@
 
 .wpqb-bundles-frontend {
     margin: 20px 0 30px;
-    padding: 20px;
+    /* padding: 20px; */
     background: #f9f9f9;
-    border: 1px solid #e5e5e5;
+    border: 0px;
     border-radius: 4px;
 }
 
 .wpqb-bundles-title {
-    margin: 0 0 16px;
+    padding: 20px 15px 15px;
     font-size: 1.2em;
     font-weight: 600;
-    color: #333;
+    color: #ffffff;
+    background-color: #0a5998;
 }
 
 .wpqb-bundles-placeholder {
-    margin: 0 0 12px;
-    color: #666;
+    margin: 0 !important;
+    color: #fff;
+    background-color: #0a5998;
     font-size: 14px;
+    padding: 0px 15px 15px 15px;
 }
 
 .wpqb-bundles-table-wrap {
@@ -30,21 +33,41 @@
     border-collapse: collapse;
     background: #fff;
     border: 1px solid #e3e3e3;
+    margin: 0px !important;
 }
 
 .wpqb-bundles-table th,
 .wpqb-bundles-table td {
-    border-bottom: 1px solid #ececec;
-    padding: 12px 10px;
+    padding: 12px 10px !important;
     vertical-align: middle;
+    line-height: 1;
+}
+
+.wpqb-bundles-table th:last-child {
+    border-right: none;
+}
+
+.wpqb-bundles-table td {
+    border: none;
+    border-bottom: 1px solid #ececec;
+}
+
+.wpqb-bundles-table td:first-child {
+    border-left: 1px solid #ececec;
+}
+
+.wpqb-bundles-table td:last-child {
+    border-right: 1px solid #ececec;
 }
 
 .wpqb-bundles-table th {
+    border: 1px solid;
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    color: #666;
-    background: #f6f7f7;
+    color: #ffffff;
+    background: #084e86;
+    border-color: #084e86;
     text-align: left;
 }
 
@@ -97,10 +120,10 @@
     font-size: 12px;
     font-weight: 600;
     color: #0f7a38;
-    background: #e9f9ef;
-    border: 1px solid #cfeedd;
+    /* background: #e9f9ef; */
+    /* border: 1px solid #cfeedd; */
     border-radius: 3px;
-    padding: 3px 8px;
+    /* padding: 3px 8px; */
 }
 
 .wpqb-empty {
