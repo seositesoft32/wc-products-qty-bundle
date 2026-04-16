@@ -50,9 +50,9 @@
     line-height: 1;
 }
 
-.wpqb-bundles-table th:last-child {
+/* .wpqb-bundles-table th:last-child {
     border-right: none;
-}
+} */
 
 .wpqb-bundles-table td {
     border: none;
