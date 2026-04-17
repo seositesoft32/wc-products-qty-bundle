@@ -31,7 +31,7 @@
         $(document).on('click', '.wpqb-remove-bundle', function (e) {
             e.preventDefault();
 
-            if (confirm('Are you sure you want to remove this bundle?')) {
+            if (confirm((window.wpqbAdmin && window.wpqbAdmin.confirmRemove) ? window.wpqbAdmin.confirmRemove : 'Are you sure you want to remove this bundle?')) {
                 $(this).closest('.wpqb-bundle-item').fadeOut(300, function () {
                     const $container = $(this).closest('.wpqb-bundles-container');
                     $(this).remove();
@@ -52,9 +52,9 @@
 
             // Create media frame
             const frame = wp.media({
-                title: 'Select Bundle Image',
+                title: (window.wpqbAdmin && window.wpqbAdmin.mediaTitle) ? window.wpqbAdmin.mediaTitle : 'Select Bundle Image',
                 button: {
-                    text: 'Use this image'
+                    text: (window.wpqbAdmin && window.wpqbAdmin.mediaButton) ? window.wpqbAdmin.mediaButton : 'Use this image'
                 },
                 multiple: false,
                 library: {

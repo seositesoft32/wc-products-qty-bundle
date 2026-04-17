@@ -5,6 +5,8 @@
     'use strict';
 
     let selectedBundle = null;
+    const pluginSettings = window.wpqbPluginSettings || {};
+    const i18n = pluginSettings.i18n || {};
 
     $(document).ready(function () {
         const $variationForm = $('form.variations_form');
@@ -134,7 +136,7 @@
             if (!rows.length) {
                 $bundleTableBody.empty();
                 if ($bundlePlaceholder.length) {
-                    $bundlePlaceholder.text('No bundles found for this variation.').show();
+                    $bundlePlaceholder.text(i18n.noBundles || 'No bundles found for this variation.').show();
                 }
                 return;
             }
@@ -157,7 +159,9 @@
                 if (hasSale && totalRegularPrice > 0) {
                     const savings = totalRegularPrice - totalSalePrice;
                     const savingsPercent = Math.round((savings / totalRegularPrice) * 100);
-                    savingsHtml = `<span class="wpqb-bundle-savings">Save ${formatPrice(savings)} (${savingsPercent}%)</span>`;
+                    if (pluginSettings.showSavings !== false) {
+                        savingsHtml = `<span class="wpqb-bundle-savings">Save ${formatPrice(savings)} (${savingsPercent}%)</span>`;
+                    }
                 }
 
                 html += `<tr class="wpqb-bundle-option"
@@ -203,7 +207,7 @@
                 deselectBundle();
                 renderVariationBundles([]);
                 if ($bundlePlaceholder.length) {
-                    $bundlePlaceholder.text('Select product options to view bundles.').show();
+                    $bundlePlaceholder.text(i18n.selectVariation || 'Select product options to view bundles.').show();
                 }
             });
         }
@@ -274,7 +278,7 @@
          * Update selected bundle total summary below table
          */
         function updateSelectedBundleTotalDisplay() {
-            if (!$selectedTotal.length) {
+            if (!$selectedTotal.length || pluginSettings.showSelectedTotal === false) {
                 return;
             }
 
@@ -320,15 +324,13 @@
          * Prevent add to cart without bundle selection (optional)
          * Uncomment if you want to force bundle selection
          */
-        /*
         $('form.cart').on('submit', function(e) {
-            if ($('.wpqb-bundles-frontend').length && !selectedBundle) {
+            if (pluginSettings.requireBundleSelection && $('.wpqb-bundles-frontend').length && !selectedBundle) {
                 e.preventDefault();
-                alert('Please select a bundle before adding to cart.');
+                alert(i18n.chooseBundle || 'Please select a bundle before adding this product to your cart.');
                 return false;
             }
         });
-        */
 
         $('form.cart').on('submit', function () {
             if (isVariableProduct) {
@@ -343,11 +345,17 @@
 
         // Handle quantity changes to update total price display
         $(document).on('change', 'input.qty', function () {
-            selectBundleByQty(getCurrentCartQty());
+            if (pluginSettings.selectionMode === 'auto') {
+                selectBundleByQty(getCurrentCartQty());
+            }
+
+            updateSelectedBundleTotalDisplay();
         });
 
         sortBundleRowsByQty();
-        selectBundleByQty(getCurrentCartQty());
+        if (pluginSettings.selectionMode === 'auto') {
+            selectBundleByQty(getCurrentCartQty());
+        }
     });
 
 })(jQuery);

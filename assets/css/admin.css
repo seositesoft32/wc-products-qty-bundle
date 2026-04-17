@@ -144,6 +144,36 @@
     margin-bottom: 10px;
 }
 
+.wpqb-settings-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    margin-top: 20px;
+}
+
+.wpqb-settings-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: #fff;
+    border: 1px solid #dcdcde;
+    padding: 20px 24px;
+}
+
+.wpqb-settings-sidebar {
+    width: 320px;
+    max-width: 100%;
+}
+
+.wpqb-settings-sidebar .postbox {
+    margin: 0 0 16px;
+}
+
+.wpqb-settings-sidebar .inside code {
+    display: block;
+    padding: 10px 12px;
+    overflow-wrap: anywhere;
+}
+
 /* Template for new bundles - hidden */
 #wpqb-bundle-template {
     display: none;
@@ -168,5 +198,13 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
+    }
+
+    .wpqb-settings-layout {
+        flex-direction: column;
+    }
+
+    .wpqb-settings-sidebar {
+        width: 100%;
     }
 }
