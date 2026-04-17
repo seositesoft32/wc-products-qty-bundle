@@ -8,6 +8,45 @@
     const pluginSettings = window.wpqbPluginSettings || {};
     const i18n = pluginSettings.i18n || {};
 
+    function isSettingEnabled(value, fallback) {
+        if (typeof value === 'boolean') {
+            return value;
+        }
+
+        if (value === '' || value === null || typeof value === 'undefined') {
+            return false;
+        }
+
+        if (typeof value === 'number') {
+            return value === 1;
+        }
+
+        if (typeof value === 'string') {
+            const normalized = value.toLowerCase();
+            if (['yes', 'true', '1', 'on'].indexOf(normalized) > -1) {
+                return true;
+            }
+
+            if (['no', 'false', '0', 'off'].indexOf(normalized) > -1) {
+                return false;
+            }
+        }
+
+        return fallback;
+    }
+
+    const settingsState = {
+        designType: (pluginSettings.designType === 'cards') ? 'cards' : 'table',
+        showPerItemPrice: isSettingEnabled(pluginSettings.showPerItemPrice, true),
+        showSavings: isSettingEnabled(pluginSettings.showSavings, true),
+        showDiscountAfterTitle: isSettingEnabled(pluginSettings.showDiscountAfterTitle, true),
+        showRegularPriceWhenSale: isSettingEnabled(pluginSettings.showRegularPriceWhenSale, true),
+        showQtyAfterPerItem: isSettingEnabled(pluginSettings.showQtyAfterPerItem, true),
+        showSelectedTotal: isSettingEnabled(pluginSettings.showSelectedTotal, true),
+        requireBundleSelection: isSettingEnabled(pluginSettings.requireBundleSelection, false),
+        selectionMode: (pluginSettings.selectionMode === 'manual') ? 'manual' : 'auto'
+    };
+
     $(document).ready(function () {
         const $variationForm = $('form.variations_form');
         const isVariableProduct = $variationForm.length > 0;
@@ -163,7 +202,7 @@
                 const imageUrl = bundle.image_url ? bundle.image_url : '';
 
                 const priceHtml = hasSale
-                    ? (pluginSettings.showRegularPriceWhenSale !== false
+                    ? (settingsState.showRegularPriceWhenSale
                         ? `<del class="wpqb-price-cutoff">${formatPrice(totalRegularPrice)}</del><ins class="wpqb-price-sale">${formatPrice(totalSalePrice)}</ins>`
                         : `<span class="wpqb-price-sale">${formatPrice(totalSalePrice)}</span>`)
                     : `<span class="wpqb-price-regular">${formatPrice(totalRegularPrice)}</span>`;
@@ -172,18 +211,18 @@
                 if (hasSale && totalRegularPrice > 0) {
                     const savings = totalRegularPrice - totalSalePrice;
                     const savingsPercent = Math.round((savings / totalRegularPrice) * 100);
-                    if (pluginSettings.showSavings !== false && pluginSettings.showDiscountAfterTitle !== false) {
+                    if (settingsState.showSavings && settingsState.showDiscountAfterTitle) {
                         savingsHtml = `<span class="wpqb-bundle-savings">${escapeHtml(i18n.savePrefix || 'Save')} ${formatPrice(savings)} (${savingsPercent}%)</span>`;
                     }
                 }
 
                 let perItemText = `${formatPrice(perItemPrice)}`;
-                if (pluginSettings.showQtyAfterPerItem !== false) {
+                if (settingsState.showQtyAfterPerItem) {
                     perItemText = `${perItemText} x ${qty}`;
                 }
 
-                const perItemCellHtml = pluginSettings.showPerItemPrice === false ? '' : `<td class="wpqb-col-per-item">${perItemText}</td>`;
-                const cardPerItemHtml = pluginSettings.showPerItemPrice === false ? '' : `<div class="wpqb-card-per-item">${perItemText}</div>`;
+                const perItemCellHtml = settingsState.showPerItemPrice ? `<td class="wpqb-col-per-item">${perItemText}</td>` : '';
+                const cardPerItemHtml = settingsState.showPerItemPrice ? `<div class="wpqb-card-per-item">${perItemText}</div>` : '';
                 const cardMediaHtml = imageUrl
                     ? `<div class="wpqb-card-media"><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(bundleName)}"></div>`
                     : `<div class="wpqb-card-media wpqb-card-media-empty" aria-hidden="true"></div>`;
@@ -227,9 +266,34 @@
 
             $bundleTableBody.html(tableHtml);
             $bundleCards.html(cardHtml);
+            applyDynamicTableBodyStyles();
             sortBundleRowsByQty();
             if ($bundlePlaceholder.length) {
                 $bundlePlaceholder.hide();
+            }
+        }
+
+        function getBundleStyleVar(varName) {
+            const host = $('.wpqb-bundles-frontend').first();
+            if (!host.length || !window.getComputedStyle) {
+                return '';
+            }
+
+            return window.getComputedStyle(host.get(0)).getPropertyValue(varName).trim();
+        }
+
+        function applyDynamicTableBodyStyles() {
+            const bodyBg = getBundleStyleVar('--wpqb-table-body-bg');
+            const bodyText = getBundleStyleVar('--wpqb-table-body-text');
+
+            if ($bundleTableBody.length) {
+                if (bodyBg) {
+                    $bundleTableBody.find('td').css('background-color', bodyBg);
+                }
+
+                if (bodyText) {
+                    $bundleTableBody.find('td, .wpqb-bundle-name').css('color', bodyText);
+                }
             }
         }
 
@@ -321,7 +385,7 @@
          * Update selected bundle total summary below table
          */
         function updateSelectedBundleTotalDisplay() {
-            if (!$selectedTotal.length || pluginSettings.showSelectedTotal === false) {
+            if (!$selectedTotal.length || !settingsState.showSelectedTotal) {
                 return;
             }
 
@@ -365,26 +429,28 @@
 
         function applySettingsToMarkup() {
             const headings = pluginSettings.headings || {};
+            const $table = $('.wpqb-bundles-table');
+            const bundleHeading = headings.bundle || 'Bundle';
+            const perItemHeading = headings.perItem || 'Per Item';
+            const totalHeading = headings.totalPrice || 'Total Price';
 
-            if (headings.bundle) {
-                $('.wpqb-bundles-table thead th').eq(0).text(headings.bundle);
+            $table.find('thead').html('<tr></tr>');
+            const $headingRow = $table.find('thead tr').first();
+            $headingRow.append(`<th>${escapeHtml(bundleHeading)}</th>`);
+
+            if (settingsState.showPerItemPrice) {
+                $headingRow.append(`<th>${escapeHtml(perItemHeading)}</th>`);
             }
 
-            if (pluginSettings.showPerItemPrice === false) {
-                $('.wpqb-bundles-table').addClass('wpqb-hide-per-item');
+            $headingRow.append(`<th>${escapeHtml(totalHeading)}</th>`);
+
+            if (!settingsState.showDiscountAfterTitle) {
+                $('.wpqb-bundle-savings').hide();
             } else {
-                if (headings.perItem) {
-                    $('.wpqb-bundles-table thead th').eq(1).text(headings.perItem);
-                }
+                $('.wpqb-bundle-savings').show();
             }
 
-            if (headings.totalPrice) {
-                const index = (pluginSettings.showPerItemPrice === false) ? 1 : 2;
-                $('.wpqb-bundles-table thead th').eq(index).text(headings.totalPrice);
-            }
-
-            const designType = pluginSettings.designType || 'table';
-            if (designType === 'cards') {
+            if (settingsState.designType === 'cards') {
                 $('.wpqb-bundles-table-wrap').addClass('wpqb-hidden');
                 $('.wpqb-bundles-cards').removeClass('wpqb-hidden');
             } else {
@@ -397,8 +463,8 @@
          * Prevent add to cart without bundle selection (optional)
          * Uncomment if you want to force bundle selection
          */
-        $('form.cart').on('submit', function(e) {
-            if (pluginSettings.requireBundleSelection && $('.wpqb-bundles-frontend').length && !selectedBundle) {
+        $('form.cart').on('submit', function (e) {
+            if (settingsState.requireBundleSelection && $('.wpqb-bundles-frontend').length && !selectedBundle) {
                 e.preventDefault();
                 alert(i18n.chooseBundle || 'Please select a bundle before adding this product to your cart.');
                 return false;
@@ -418,7 +484,7 @@
 
         // Handle quantity changes to update total price display
         $(document).on('change', 'input.qty', function () {
-            if (pluginSettings.selectionMode === 'auto') {
+            if (settingsState.selectionMode === 'auto') {
                 selectBundleByQty(getCurrentCartQty());
             }
 
@@ -427,7 +493,8 @@
 
         sortBundleRowsByQty();
         applySettingsToMarkup();
-        if (pluginSettings.selectionMode === 'auto') {
+        applyDynamicTableBodyStyles();
+        if (settingsState.selectionMode === 'auto') {
             selectBundleByQty(getCurrentCartQty());
         }
     });
