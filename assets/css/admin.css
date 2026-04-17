@@ -151,12 +151,171 @@
     margin-top: 20px;
 }
 
+.wpqb-settings-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 20px;
+    border: 1px solid #d7dce1;
+    border-radius: 12px;
+    background: linear-gradient(140deg, #fff 0%, #f4f8fc 100%);
+}
+
+.wpqb-settings-hero h1 {
+    margin: 0 0 6px;
+}
+
+.wpqb-settings-hero p {
+    margin: 0;
+    color: #4f5b66;
+}
+
+.wpqb-settings-actions .button-hero {
+    min-width: 150px;
+}
+
+.wpqb-settings-notice {
+    display: none;
+    margin-top: 12px;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-weight: 600;
+}
+
+.wpqb-settings-notice.is-visible {
+    display: block;
+}
+
+.wpqb-settings-notice.is-success {
+    background: #ecf9f0;
+    color: #0b7a2f;
+    border: 1px solid #bce8c9;
+}
+
+.wpqb-settings-notice.is-error {
+    background: #fff2f2;
+    color: #b42318;
+    border: 1px solid #f5c2c7;
+}
+
 .wpqb-settings-main {
     flex: 1 1 auto;
     min-width: 0;
     background: #fff;
-    border: 1px solid #dcdcde;
-    padding: 20px 24px;
+    border: 1px solid #d7dce1;
+    border-radius: 12px;
+    padding: 18px;
+}
+
+.wpqb-settings-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e6ebf0;
+}
+
+.wpqb-tab {
+    border: 1px solid #d7dce1;
+    background: #fff;
+    color: #1d2939;
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.wpqb-tab.is-active {
+    background: #0a5998;
+    color: #fff;
+    border-color: #0a5998;
+}
+
+.wpqb-tab.is-muted {
+    opacity: 0.72;
+}
+
+.wpqb-tab-panel {
+    display: none;
+}
+
+.wpqb-tab-panel.is-active {
+    display: block;
+}
+
+.wpqb-tab-panel h2 {
+    margin-top: 0;
+    margin-bottom: 6px;
+}
+
+.wpqb-tab-panel .description {
+    margin-top: 0;
+    margin-bottom: 14px;
+}
+
+.wpqb-field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.wpqb-field-card,
+.wpqb-check-card {
+    background: #f8fafc;
+    border: 1px solid #e6ebf0;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.wpqb-field-card label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.wpqb-field-card input[type="text"],
+.wpqb-field-card select {
+    width: 100%;
+}
+
+.wpqb-checklist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.wpqb-check-card {
+    margin: 0;
+}
+
+.wpqb-check-card legend {
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.wpqb-check-card label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.wpqb-color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.wpqb-color-grid label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background: #f8fafc;
+    border: 1px solid #e6ebf0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-weight: 600;
 }
 
 .wpqb-settings-sidebar {
@@ -202,6 +361,12 @@
 
     .wpqb-settings-layout {
         flex-direction: column;
+    }
+
+    .wpqb-settings-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
     }
 
     .wpqb-settings-sidebar {

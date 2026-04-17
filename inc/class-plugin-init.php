@@ -15,6 +15,7 @@ class WPQB_Plugin_Init
 
         add_action('admin_init', [$this, 'register_settings']);
         add_action('admin_menu', [$this, 'admin_menus']);
+        add_action('wp_ajax_wpqb_save_settings', [$this, 'ajax_save_settings']);
         add_filter('plugin_action_links_' . WPQB_PLUGIN_BASENAME, [$this, 'add_plugin_action_links']);
 
         add_action('woocommerce_product_options_pricing', [$this, 'add_qty_bundle_fields']);
@@ -95,6 +96,26 @@ class WPQB_Plugin_Init
             return;
         }
 
+        $is_settings_page = ('woocommerce_page_wpqb-plugin-settings' === $hook);
+
+        wp_enqueue_script('wpqb-admin-js', WPQB_PLUGIN_URL . 'assets/js/admin.js', ['jquery'], WPQB_PLUGIN_VERSION, true);
+        wp_localize_script(
+            'wpqb-admin-js',
+            'wpqbAdmin',
+            [
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'saveNonce' => wp_create_nonce('wpqb_save_settings'),
+                'isSettingsPage' => $is_settings_page,
+                'confirmRemove' => __('Are you sure you want to remove this bundle?', 'wpqb'),
+                'mediaTitle' => __('Select Bundle Image', 'wpqb'),
+                'mediaButton' => __('Use this image', 'wpqb'),
+                'saveButton' => __('Save Settings', 'wpqb'),
+                'savingButton' => __('Saving...', 'wpqb'),
+                'savedMessage' => __('Settings saved successfully.', 'wpqb'),
+                'errorMessage' => __('Unable to save settings. Please try again.', 'wpqb'),
+            ]
+        );
+
         if (in_array($hook, ['post.php', 'post-new.php'], true)) {
             global $post;
 
@@ -103,19 +124,43 @@ class WPQB_Plugin_Init
             }
 
             wp_enqueue_media();
-            wp_enqueue_script('wpqb-admin-js', WPQB_PLUGIN_URL . 'assets/js/admin.js', ['jquery'], WPQB_PLUGIN_VERSION, true);
-            wp_localize_script(
-                'wpqb-admin-js',
-                'wpqbAdmin',
-                [
-                    'confirmRemove' => __('Are you sure you want to remove this bundle?', 'wpqb'),
-                    'mediaTitle' => __('Select Bundle Image', 'wpqb'),
-                    'mediaButton' => __('Use this image', 'wpqb'),
-                ]
-            );
         }
 
         wp_enqueue_style('wpqb-admin-css', WPQB_PLUGIN_URL . 'assets/css/admin.css', [], WPQB_PLUGIN_VERSION);
+    }
+
+    public function ajax_save_settings()
+    {
+        if (!current_user_can('manage_woocommerce')) {
+            wp_send_json_error([
+                'message' => __('You are not allowed to save these settings.', 'wpqb'),
+            ], 403);
+        }
+
+        check_ajax_referer('wpqb_save_settings', 'nonce');
+
+        $form_data_raw = isset($_POST['form_data']) ? wp_unslash($_POST['form_data']) : '';
+        if (empty($form_data_raw) || !is_string($form_data_raw)) {
+            wp_send_json_error([
+                'message' => __('No settings payload received.', 'wpqb'),
+            ], 400);
+        }
+
+        $parsed = [];
+        parse_str($form_data_raw, $parsed);
+        $settings = isset($parsed['wpqb_plugin_setting']) && is_array($parsed['wpqb_plugin_setting'])
+            ? $parsed['wpqb_plugin_setting']
+            : [];
+
+        $sanitized = wpqb_plugin_sanitize_settings($settings);
+        update_option('wpqb_plugin_setting', $sanitized);
+
+        $this->settings = wpqb_plugin_settings();
+
+        wp_send_json_success([
+            'message' => __('Settings saved successfully.', 'wpqb'),
+            'settings' => $sanitized,
+        ]);
     }
 
     public function enqueue_frontend_assets()
@@ -898,6 +943,9 @@ class WPQB_Plugin_Init
             '--wpqb-table-head-text' => 'table_head_text_color',
             '--wpqb-table-body-bg' => 'table_body_bg_color',
             '--wpqb-table-body-text' => 'table_body_text_color',
+            '--wpqb-card-bg' => 'card_bg_color',
+            '--wpqb-card-text' => 'card_text_color',
+            '--wpqb-card-border' => 'card_border_color',
             '--wpqb-discount-bg' => 'discount_bg_color',
             '--wpqb-discount-text' => 'discount_text_color',
             '--wpqb-regular-price' => 'regular_price_color',

@@ -47,6 +47,9 @@ function wpqb_plugin_get_default_settings()
         'table_head_text_color' => '#ffffff',
         'table_body_bg_color' => '#ffffff',
         'table_body_text_color' => '#1d2327',
+        'card_bg_color' => '#ffffff',
+        'card_text_color' => '#1d2327',
+        'card_border_color' => '#e1e3e5',
         'discount_bg_color' => '#e9f9ef',
         'discount_text_color' => '#0f7a38',
         'regular_price_color' => '#8a8a8a',
@@ -88,7 +91,7 @@ function wpqb_plugin_sanitize_settings($settings)
         $sanitized[$key] = (!empty($settings[$key]) && 'yes' === $settings[$key]) ? 'yes' : 'no';
     }
 
-    foreach (['table_head_bg_color', 'table_head_text_color', 'table_body_bg_color', 'table_body_text_color', 'discount_bg_color', 'discount_text_color', 'regular_price_color', 'sale_price_color', 'strikethrough_price_color'] as $color_key) {
+    foreach (['table_head_bg_color', 'table_head_text_color', 'table_body_bg_color', 'table_body_text_color', 'card_bg_color', 'card_text_color', 'card_border_color', 'discount_bg_color', 'discount_text_color', 'regular_price_color', 'sale_price_color', 'strikethrough_price_color'] as $color_key) {
         $sanitized[$color_key] = wpqb_plugin_sanitize_hex_color(isset($settings[$color_key]) ? $settings[$color_key] : '', $defaults[$color_key]);
     }
 

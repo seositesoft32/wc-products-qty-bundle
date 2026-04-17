@@ -7,6 +7,8 @@
     let bundleIndex = 0;
 
     $(document).ready(function () {
+        initSettingsPage();
+
         // Initialize bundle index based on existing bundles
         bundleIndex = $('.wpqb-bundle-item').length;
 
@@ -124,6 +126,92 @@
             }
         );
     });
+
+    function initSettingsPage() {
+        const $settingsPage = $('.wpqb-settings-page');
+        if (!$settingsPage.length) {
+            return;
+        }
+
+        const $tabs = $settingsPage.find('.wpqb-tab');
+        const $panels = $settingsPage.find('.wpqb-tab-panel');
+        const $form = $('#wpqb-settings-form');
+        const $saveButton = $('#wpqb-save-settings');
+        const $notice = $('#wpqb-settings-notice');
+        const i18nSaveButton = (window.wpqbAdmin && window.wpqbAdmin.saveButton) ? window.wpqbAdmin.saveButton : 'Save Settings';
+        const i18nSavingButton = (window.wpqbAdmin && window.wpqbAdmin.savingButton) ? window.wpqbAdmin.savingButton : 'Saving...';
+        const i18nSavedMessage = (window.wpqbAdmin && window.wpqbAdmin.savedMessage) ? window.wpqbAdmin.savedMessage : 'Settings saved successfully.';
+        const i18nErrorMessage = (window.wpqbAdmin && window.wpqbAdmin.errorMessage) ? window.wpqbAdmin.errorMessage : 'Unable to save settings. Please try again.';
+
+        function setNotice(message, status) {
+            $notice.removeClass('is-success is-error').addClass('is-visible');
+            $notice.addClass('success' === status ? 'is-success' : 'is-error').text(message);
+        }
+
+        function clearNotice() {
+            $notice.removeClass('is-visible is-success is-error').text('');
+        }
+
+        function switchTab(target) {
+            $tabs.removeClass('is-active');
+            $tabs.filter('[data-tab="' + target + '"]').addClass('is-active');
+
+            $panels.removeClass('is-active');
+            $panels.filter('[data-panel="' + target + '"]').addClass('is-active');
+        }
+
+        function syncDesignPanels() {
+            const design = $('#wpqb_design_type').val();
+            const isCards = 'cards' === design;
+
+            $tabs.filter('[data-tab="table-style"]').toggleClass('is-muted', isCards);
+            $tabs.filter('[data-tab="cards-style"]').toggleClass('is-muted', !isCards);
+        }
+
+        $tabs.on('click', function () {
+            const target = $(this).data('tab');
+            switchTab(target);
+        });
+
+        $('#wpqb_design_type').on('change', syncDesignPanels);
+        syncDesignPanels();
+
+        function saveSettingsAjax() {
+            clearNotice();
+            $saveButton.prop('disabled', true).text(i18nSavingButton);
+
+            $.ajax({
+                url: (window.wpqbAdmin && window.wpqbAdmin.ajaxUrl) ? window.wpqbAdmin.ajaxUrl : ajaxurl,
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    action: 'wpqb_save_settings',
+                    nonce: (window.wpqbAdmin && window.wpqbAdmin.saveNonce) ? window.wpqbAdmin.saveNonce : '',
+                    form_data: $form.serialize()
+                }
+            }).done(function (response) {
+                if (response && response.success) {
+                    setNotice((response.data && response.data.message) ? response.data.message : i18nSavedMessage, 'success');
+                } else {
+                    setNotice((response && response.data && response.data.message) ? response.data.message : i18nErrorMessage, 'error');
+                }
+            }).fail(function () {
+                setNotice(i18nErrorMessage, 'error');
+            }).always(function () {
+                $saveButton.prop('disabled', false).text(i18nSaveButton);
+            });
+        }
+
+        $saveButton.on('click', function (e) {
+            e.preventDefault();
+            saveSettingsAjax();
+        });
+
+        $form.on('submit', function (e) {
+            e.preventDefault();
+            saveSettingsAjax();
+        });
+    }
 
     /**
      * Add a new bundle to the container
