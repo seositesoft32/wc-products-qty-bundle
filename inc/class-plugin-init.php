@@ -130,14 +130,26 @@ class WPQB_Plugin_Init
             'wpqb-frontend-js',
             'wpqbPluginSettings',
             [
+                'designType' => $this->settings['design_type'],
                 'selectionMode' => $this->settings['selection_mode'],
                 'requireBundleSelection' => ('yes' === $this->settings['require_bundle_selection']),
                 'showSelectedTotal' => ('yes' === $this->settings['show_selected_total']),
                 'showSavings' => ('yes' === $this->settings['show_savings']),
+                'showDiscountAfterTitle' => ('yes' === $this->settings['show_discount_after_title']),
+                'showPerItemPrice' => ('yes' === $this->settings['show_per_item_price']),
+                'showRegularPriceWhenSale' => ('yes' === $this->settings['show_regular_price_when_sale']),
+                'showQtyAfterPerItem' => ('yes' === $this->settings['show_qty_after_per_item']),
+                'headings' => [
+                    'bundle' => $this->settings['table_heading_bundle'],
+                    'perItem' => $this->settings['table_heading_per_item'],
+                    'totalPrice' => $this->settings['table_heading_total_price'],
+                ],
                 'i18n' => [
                     'selectVariation' => __('Select product options to view bundles.', 'wpqb'),
                     'noBundles' => __('No bundles found for this variation.', 'wpqb'),
                     'chooseBundle' => __('Please select a bundle before adding this product to your cart.', 'wpqb'),
+                    'savePrefix' => __('Save', 'wpqb'),
+                    'bundleFallback' => __('Bundle', 'wpqb'),
                 ],
             ]
         );
@@ -180,6 +192,8 @@ class WPQB_Plugin_Init
         $regular_price = isset($bundle['regular_price']) ? $bundle['regular_price'] : '';
         $sale_price = isset($bundle['sale_price']) ? $bundle['sale_price'] : '';
         $qty = isset($bundle['qty']) ? $bundle['qty'] : '';
+        $image_id = isset($bundle['image_id']) ? absint($bundle['image_id']) : 0;
+        $image_url = $image_id ? wp_get_attachment_image_url($image_id, 'thumbnail') : '';
         ?>
         <div class="wpqb-bundle-item" data-index="<?php echo esc_attr($index); ?>">
             <div class="wpqb-bundle-header">
@@ -219,6 +233,20 @@ class WPQB_Plugin_Init
                         value="<?php echo esc_attr($sale_price); ?>"
                         placeholder="<?php echo esc_attr__('0.00', 'wpqb'); ?>"
                         class="short wc_input_price" />
+                </p>
+                <p class="wpqb-form-field wpqb-image-field">
+                    <label><?php esc_html_e('Bundle Image', 'wpqb'); ?></label>
+                    <span class="wpqb-image-preview">
+                        <?php if ($image_url) : ?>
+                            <img src="<?php echo esc_url($image_url); ?>" alt="" style="max-width: 100px; max-height: 100px;" />
+                        <?php endif; ?>
+                    </span>
+                    <input type="hidden"
+                        name="<?php echo esc_attr($name_prefix); ?>[<?php echo esc_attr($index); ?>][image_id]"
+                        class="wpqb-image-id"
+                        value="<?php echo esc_attr($image_id); ?>" />
+                    <button type="button" class="button wpqb-upload-image"><?php esc_html_e('Upload Image', 'wpqb'); ?></button>
+                    <button type="button" class="button wpqb-remove-image" <?php echo $image_url ? '' : 'style="display:none;"'; ?>><?php esc_html_e('Remove Image', 'wpqb'); ?></button>
                 </p>
             </div>
         </div>
@@ -320,6 +348,8 @@ class WPQB_Plugin_Init
     {
         $is_variable = $product->is_type('variable');
         $bundles = $is_variable ? [] : $this->get_product_bundles($product->get_id());
+        $is_table = ('table' === $this->settings['design_type']);
+        $inline_style = $this->get_frontend_inline_style();
 
         if (!$is_variable && empty($bundles)) {
             return '';
@@ -327,20 +357,22 @@ class WPQB_Plugin_Init
 
         ob_start();
         ?>
-        <div class="wpqb-bundles-frontend<?php echo $is_primary_product_form ? '' : ' wpqb-bundles-shortcode'; ?>">
+        <div class="wpqb-bundles-frontend wpqb-design-<?php echo esc_attr($this->settings['design_type']); ?><?php echo $is_primary_product_form ? '' : ' wpqb-bundles-shortcode'; ?>" style="<?php echo esc_attr($inline_style); ?>">
             <h3 class="wpqb-bundles-title"><?php echo esc_html($this->settings['table_title']); ?></h3>
             <input type="hidden" name="wpqb_selected_bundle" id="wpqb-selected-bundle" value="" />
             <?php if ($is_variable) : ?>
                 <p class="wpqb-bundles-placeholder"><?php esc_html_e('Select product options to view bundles.', 'wpqb'); ?></p>
             <?php endif; ?>
             <div class="wpqb-bundles-list">
-                <div class="wpqb-bundles-table-wrap">
+                <div class="wpqb-bundles-table-wrap<?php echo $is_table ? '' : ' wpqb-hidden'; ?>">
                     <table class="wpqb-bundles-table">
                         <thead>
                             <tr>
-                                <th><?php esc_html_e('Bundle', 'wpqb'); ?></th>
-                                <th><?php esc_html_e('Per Item', 'wpqb'); ?></th>
-                                <th><?php esc_html_e('Total Price', 'wpqb'); ?></th>
+                                <th><?php echo esc_html($this->settings['table_heading_bundle']); ?></th>
+                                <?php if ('yes' === $this->settings['show_per_item_price']) : ?>
+                                    <th><?php echo esc_html($this->settings['table_heading_per_item']); ?></th>
+                                <?php endif; ?>
+                                <th><?php echo esc_html($this->settings['table_heading_total_price']); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -359,6 +391,20 @@ class WPQB_Plugin_Init
                         </tbody>
                     </table>
                 </div>
+                <div class="wpqb-bundles-cards<?php echo $is_table ? ' wpqb-hidden' : ''; ?>">
+                    <?php
+                    if (!$is_variable) {
+                        foreach ($bundles as $index => $bundle) {
+                            $pricing = $this->build_bundle_pricing_data($product, $bundle, $index, 0);
+                            if (empty($pricing)) {
+                                continue;
+                            }
+
+                            echo $this->get_bundle_card_html($pricing, $index);
+                        }
+                    }
+                    ?>
+                </div>
             </div>
         </div>
         <p class="wpqb-selected-total" id="wpqb-selected-total"<?php echo ('yes' === $this->settings['show_selected_total']) ? '' : ' style="display:none;"'; ?>></p>
@@ -370,13 +416,18 @@ class WPQB_Plugin_Init
     private function get_bundle_row_html($pricing, $fallback_index = 0)
     {
         $bundle_name = !empty($pricing['bundle_name']) ? $pricing['bundle_name'] : sprintf(__('Bundle %d', 'wpqb'), $fallback_index + 1);
-        $price_html = wc_price($pricing['total_regular_price']);
+        $price_html = '<span class="wpqb-price-regular">' . wc_price($pricing['total_regular_price']) . '</span>';
         $savings_html = '';
+        $has_sale = !empty($pricing['total_sale_price']) && $pricing['total_sale_price'] < $pricing['total_regular_price'];
 
-        if (!empty($pricing['total_sale_price']) && $pricing['total_sale_price'] < $pricing['total_regular_price']) {
-            $price_html = '<del>' . wc_price($pricing['total_regular_price']) . '</del><ins>' . wc_price($pricing['total_sale_price']) . '</ins>';
+        if ($has_sale) {
+            if ('yes' === $this->settings['show_regular_price_when_sale']) {
+                $price_html = '<del class="wpqb-price-cutoff">' . wc_price($pricing['total_regular_price']) . '</del><ins class="wpqb-price-sale">' . wc_price($pricing['total_sale_price']) . '</ins>';
+            } else {
+                $price_html = '<span class="wpqb-price-sale">' . wc_price($pricing['total_sale_price']) . '</span>';
+            }
 
-            if ('yes' === $this->settings['show_savings'] && $pricing['total_regular_price'] > 0) {
+            if ('yes' === $this->settings['show_savings'] && 'yes' === $this->settings['show_discount_after_title'] && $pricing['total_regular_price'] > 0) {
                 $savings = $pricing['total_regular_price'] - $pricing['total_sale_price'];
                 $savings_percent = (int) round(($savings / $pricing['total_regular_price']) * 100);
                 $savings_html = sprintf(
@@ -384,6 +435,11 @@ class WPQB_Plugin_Init
                     esc_html(sprintf(__('Save %1$s (%2$d%%)', 'wpqb'), wp_strip_all_tags(wc_price($savings)), $savings_percent))
                 );
             }
+        }
+
+        $per_item_text = wp_strip_all_tags(wc_price($pricing['per_item_price']));
+        if ('yes' === $this->settings['show_qty_after_per_item']) {
+            $per_item_text = sprintf(__('%1$s x %2$d', 'wpqb'), $per_item_text, $pricing['tier_qty']);
         }
 
         ob_start();
@@ -399,13 +455,78 @@ class WPQB_Plugin_Init
                 <span class="wpqb-bundle-name"><?php echo esc_html($bundle_name); ?></span>
                 <?php echo wp_kses_post($savings_html); ?>
             </td>
-            <td class="wpqb-col-per-item">
-                <?php echo esc_html(sprintf(__('%1$s x %2$d', 'wpqb'), wp_strip_all_tags(wc_price($pricing['per_item_price'])), $pricing['tier_qty'])); ?>
-            </td>
+            <?php if ('yes' === $this->settings['show_per_item_price']) : ?>
+                <td class="wpqb-col-per-item">
+                    <?php echo esc_html($per_item_text); ?>
+                </td>
+            <?php endif; ?>
             <td class="wpqb-col-price wpqb-bundle-price">
                 <?php echo wp_kses_post($price_html); ?>
             </td>
         </tr>
+        <?php
+
+        return ob_get_clean();
+    }
+
+    private function get_bundle_card_html($pricing, $fallback_index = 0)
+    {
+        $bundle_name = !empty($pricing['bundle_name']) ? $pricing['bundle_name'] : sprintf(__('Bundle %d', 'wpqb'), $fallback_index + 1);
+        $has_sale = !empty($pricing['total_sale_price']) && $pricing['total_sale_price'] < $pricing['total_regular_price'];
+        $price_html = '<span class="wpqb-price-regular">' . wc_price($pricing['total_regular_price']) . '</span>';
+        $discount_html = '';
+
+        if ($has_sale) {
+            if ('yes' === $this->settings['show_regular_price_when_sale']) {
+                $price_html = '<del class="wpqb-price-cutoff">' . wc_price($pricing['total_regular_price']) . '</del><ins class="wpqb-price-sale">' . wc_price($pricing['total_sale_price']) . '</ins>';
+            } else {
+                $price_html = '<span class="wpqb-price-sale">' . wc_price($pricing['total_sale_price']) . '</span>';
+            }
+
+            if ('yes' === $this->settings['show_savings'] && 'yes' === $this->settings['show_discount_after_title'] && $pricing['total_regular_price'] > 0) {
+                $savings = $pricing['total_regular_price'] - $pricing['total_sale_price'];
+                $savings_percent = (int) round(($savings / $pricing['total_regular_price']) * 100);
+                $discount_html = sprintf(
+                    '<span class="wpqb-bundle-savings">%s</span>',
+                    esc_html(sprintf(__('Save %1$s (%2$d%%)', 'wpqb'), wp_strip_all_tags(wc_price($savings)), $savings_percent))
+                );
+            }
+        }
+
+        $per_item_text = wp_strip_all_tags(wc_price($pricing['per_item_price']));
+        if ('yes' === $this->settings['show_qty_after_per_item']) {
+            $per_item_text = sprintf(__('%1$s x %2$d', 'wpqb'), $per_item_text, $pricing['tier_qty']);
+        }
+
+        $image_markup = '<div class="wpqb-card-media wpqb-card-media-empty" aria-hidden="true"></div>';
+        if (!empty($pricing['image_id'])) {
+            $image_src = wp_get_attachment_image_url($pricing['image_id'], 'woocommerce_thumbnail');
+            if ($image_src) {
+                $image_markup = '<div class="wpqb-card-media"><img src="' . esc_url($image_src) . '" alt="' . esc_attr($bundle_name) . '" /></div>';
+            }
+        }
+
+        ob_start();
+        ?>
+        <div class="wpqb-bundle-card wpqb-bundle-option"
+            data-bundle-index="<?php echo esc_attr($pricing['bundle_index']); ?>"
+            data-bundle-name="<?php echo esc_attr($pricing['bundle_name']); ?>"
+            data-qty="<?php echo esc_attr($pricing['tier_qty']); ?>"
+            data-price="<?php echo esc_attr($pricing['total_price']); ?>"
+            data-regular-price="<?php echo esc_attr($pricing['total_regular_price']); ?>"
+            data-sale-price="<?php echo esc_attr($pricing['total_sale_price']); ?>">
+            <?php echo wp_kses_post($image_markup); ?>
+            <div class="wpqb-card-content">
+                <div class="wpqb-card-title-row">
+                    <span class="wpqb-bundle-name"><?php echo esc_html($bundle_name); ?></span>
+                    <?php echo wp_kses_post($discount_html); ?>
+                </div>
+                <?php if ('yes' === $this->settings['show_per_item_price']) : ?>
+                    <div class="wpqb-card-per-item"><?php echo esc_html($per_item_text); ?></div>
+                <?php endif; ?>
+                <div class="wpqb-card-total wpqb-bundle-price"><?php echo wp_kses_post($price_html); ?></div>
+            </div>
+        </div>
         <?php
 
         return ob_get_clean();
@@ -432,6 +553,8 @@ class WPQB_Plugin_Init
                 'price' => $pricing['total_price'],
                 'regular_price' => $pricing['total_regular_price'],
                 'sale_price' => $pricing['total_sale_price'],
+                'image_id' => $pricing['image_id'],
+                'image_url' => $pricing['image_id'] ? wp_get_attachment_image_url($pricing['image_id'], 'woocommerce_thumbnail') : '',
             ];
         }
 
@@ -619,7 +742,7 @@ class WPQB_Plugin_Init
                 'qty' => $qty,
                 'regular_price' => '' !== $regular_price ? $regular_price : '',
                 'sale_price' => '' !== $sale_price ? $sale_price : '',
-                'image_id' => 0,
+                'image_id' => absint(isset($bundle['image_id']) ? $bundle['image_id'] : 0),
             ];
         }
 
@@ -763,8 +886,34 @@ class WPQB_Plugin_Init
             'total_price' => $per_item_price * $applied_qty,
             'total_regular_price' => $total_regular_price,
             'total_sale_price' => $total_sale_price,
+            'image_id' => isset($bundle['image_id']) ? absint($bundle['image_id']) : 0,
             'source_product_id' => $product->get_id(),
         ];
+    }
+
+    private function get_frontend_inline_style()
+    {
+        $map = [
+            '--wpqb-table-head-bg' => 'table_head_bg_color',
+            '--wpqb-table-head-text' => 'table_head_text_color',
+            '--wpqb-table-body-bg' => 'table_body_bg_color',
+            '--wpqb-table-body-text' => 'table_body_text_color',
+            '--wpqb-discount-bg' => 'discount_bg_color',
+            '--wpqb-discount-text' => 'discount_text_color',
+            '--wpqb-regular-price' => 'regular_price_color',
+            '--wpqb-sale-price' => 'sale_price_color',
+            '--wpqb-cutoff-price' => 'strikethrough_price_color',
+        ];
+
+        $parts = [];
+
+        foreach ($map as $css_var => $setting_key) {
+            if (!empty($this->settings[$setting_key])) {
+                $parts[] = sprintf('%s:%s', $css_var, sanitize_hex_color($this->settings[$setting_key]));
+            }
+        }
+
+        return implode(';', $parts);
     }
 
     private function refresh_cart_bundle_data($cart_item, $quantity)

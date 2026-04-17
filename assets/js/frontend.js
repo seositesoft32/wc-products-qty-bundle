@@ -12,6 +12,7 @@
         const $variationForm = $('form.variations_form');
         const isVariableProduct = $variationForm.length > 0;
         const $bundleTableBody = $('.wpqb-bundles-table tbody');
+        const $bundleCards = $('.wpqb-bundles-cards');
         const $bundlePlaceholder = $('.wpqb-bundles-placeholder');
         const $selectedTotal = $('#wpqb-selected-total');
         const $defaultPriceElement = $('.summary .price').first();
@@ -70,11 +71,12 @@
         }
 
         function sortBundleRowsByQty() {
-            if (!$bundleTableBody.length) {
+            const $rows = $('.wpqb-bundle-option');
+            if (!$rows.length) {
                 return;
             }
 
-            const rows = $bundleTableBody.find('tr.wpqb-bundle-option').get();
+            const rows = $rows.get();
             rows.sort(function (a, b) {
                 const aQty = parseInt($(a).data('qty'), 10) || 0;
                 const bQty = parseInt($(b).data('qty'), 10) || 0;
@@ -82,7 +84,12 @@
             });
 
             $.each(rows, function (_, row) {
-                $bundleTableBody.append(row);
+                const $row = $(row);
+                if ($row.is('tr')) {
+                    $bundleTableBody.append(row);
+                } else {
+                    $bundleCards.append(row);
+                }
             });
         }
 
@@ -121,7 +128,7 @@
         }
 
         function renderVariationBundles(bundles) {
-            if (!$bundleTableBody.length) {
+            if (!$bundleTableBody.length && !$bundleCards.length) {
                 return;
             }
 
@@ -135,13 +142,15 @@
 
             if (!rows.length) {
                 $bundleTableBody.empty();
+                $bundleCards.empty();
                 if ($bundlePlaceholder.length) {
                     $bundlePlaceholder.text(i18n.noBundles || 'No bundles found for this variation.').show();
                 }
                 return;
             }
 
-            let html = '';
+            let tableHtml = '';
+            let cardHtml = '';
             rows.forEach(function (bundle, index) {
                 const qty = parseInt(bundle.qty, 10) || 0;
                 const totalPrice = parseFloat(bundle.price) || 0;
@@ -150,40 +159,74 @@
                 const hasSale = totalSalePrice > 0 && totalSalePrice < totalRegularPrice;
                 const perItemPrice = parseFloat(bundle.per_item_price) || 0;
                 const bundleName = bundle.bundle_name ? bundle.bundle_name : ('Bundle ' + (index + 1));
+                const imageId = parseInt(bundle.image_id, 10) || 0;
+                const imageUrl = bundle.image_url ? bundle.image_url : '';
 
                 const priceHtml = hasSale
-                    ? `<del>${formatPrice(totalRegularPrice)}</del><ins>${formatPrice(totalSalePrice)}</ins>`
-                    : `${formatPrice(totalRegularPrice)}`;
+                    ? (pluginSettings.showRegularPriceWhenSale !== false
+                        ? `<del class="wpqb-price-cutoff">${formatPrice(totalRegularPrice)}</del><ins class="wpqb-price-sale">${formatPrice(totalSalePrice)}</ins>`
+                        : `<span class="wpqb-price-sale">${formatPrice(totalSalePrice)}</span>`)
+                    : `<span class="wpqb-price-regular">${formatPrice(totalRegularPrice)}</span>`;
 
-                let savingsHtml = '<span class="wpqb-empty">-</span>';
+                let savingsHtml = '';
                 if (hasSale && totalRegularPrice > 0) {
                     const savings = totalRegularPrice - totalSalePrice;
                     const savingsPercent = Math.round((savings / totalRegularPrice) * 100);
-                    if (pluginSettings.showSavings !== false) {
-                        savingsHtml = `<span class="wpqb-bundle-savings">Save ${formatPrice(savings)} (${savingsPercent}%)</span>`;
+                    if (pluginSettings.showSavings !== false && pluginSettings.showDiscountAfterTitle !== false) {
+                        savingsHtml = `<span class="wpqb-bundle-savings">${escapeHtml(i18n.savePrefix || 'Save')} ${formatPrice(savings)} (${savingsPercent}%)</span>`;
                     }
                 }
 
-                html += `<tr class="wpqb-bundle-option"
+                let perItemText = `${formatPrice(perItemPrice)}`;
+                if (pluginSettings.showQtyAfterPerItem !== false) {
+                    perItemText = `${perItemText} x ${qty}`;
+                }
+
+                const perItemCellHtml = pluginSettings.showPerItemPrice === false ? '' : `<td class="wpqb-col-per-item">${perItemText}</td>`;
+                const cardPerItemHtml = pluginSettings.showPerItemPrice === false ? '' : `<div class="wpqb-card-per-item">${perItemText}</div>`;
+                const cardMediaHtml = imageUrl
+                    ? `<div class="wpqb-card-media"><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(bundleName)}"></div>`
+                    : `<div class="wpqb-card-media wpqb-card-media-empty" aria-hidden="true"></div>`;
+
+                tableHtml += `<tr class="wpqb-bundle-option"
                             data-bundle-index="${escapeHtml(bundle.bundle_index)}"
                             data-bundle-name="${escapeHtml(bundle.bundle_name)}"
                             data-qty="${qty}"
                             data-price="${totalPrice}"
                             data-regular-price="${totalRegularPrice}"
-                            data-sale-price="${totalSalePrice}">
+                            data-sale-price="${totalSalePrice}"
+                            data-image-id="${imageId}">
                             <td class="wpqb-col-name">
                                 <span class="wpqb-bundle-name">${escapeHtml(bundleName)}</span>
-                                <br>
+                                ${savingsHtml ? '<br>' : ''}
                                 ${savingsHtml}
                             </td>
-                            <td class="wpqb-col-per-item"> ${formatPrice(perItemPrice)} x ${qty}</td>
+                            ${perItemCellHtml}
                             <td class="wpqb-col-price wpqb-bundle-price">${priceHtml}</td>
                         </tr>`;
-                // <td class="wpqb-col-qty">${qty} items</td>
-                // <td class="wpqb-col-savings">${savingsHtml}</td>
+
+                cardHtml += `<div class="wpqb-bundle-card wpqb-bundle-option"
+                            data-bundle-index="${escapeHtml(bundle.bundle_index)}"
+                            data-bundle-name="${escapeHtml(bundle.bundle_name)}"
+                            data-qty="${qty}"
+                            data-price="${totalPrice}"
+                            data-regular-price="${totalRegularPrice}"
+                            data-sale-price="${totalSalePrice}"
+                            data-image-id="${imageId}">
+                            ${cardMediaHtml}
+                            <div class="wpqb-card-content">
+                                <div class="wpqb-card-title-row">
+                                    <span class="wpqb-bundle-name">${escapeHtml(bundleName)}</span>
+                                    ${savingsHtml}
+                                </div>
+                                ${cardPerItemHtml}
+                                <div class="wpqb-card-total wpqb-bundle-price">${priceHtml}</div>
+                            </div>
+                        </div>`;
             });
 
-            $bundleTableBody.html(html);
+            $bundleTableBody.html(tableHtml);
+            $bundleCards.html(cardHtml);
             sortBundleRowsByQty();
             if ($bundlePlaceholder.length) {
                 $bundlePlaceholder.hide();
@@ -320,6 +363,36 @@
             return curSymbol + parseFloat(price).toFixed(2);
         }
 
+        function applySettingsToMarkup() {
+            const headings = pluginSettings.headings || {};
+
+            if (headings.bundle) {
+                $('.wpqb-bundles-table thead th').eq(0).text(headings.bundle);
+            }
+
+            if (pluginSettings.showPerItemPrice === false) {
+                $('.wpqb-bundles-table').addClass('wpqb-hide-per-item');
+            } else {
+                if (headings.perItem) {
+                    $('.wpqb-bundles-table thead th').eq(1).text(headings.perItem);
+                }
+            }
+
+            if (headings.totalPrice) {
+                const index = (pluginSettings.showPerItemPrice === false) ? 1 : 2;
+                $('.wpqb-bundles-table thead th').eq(index).text(headings.totalPrice);
+            }
+
+            const designType = pluginSettings.designType || 'table';
+            if (designType === 'cards') {
+                $('.wpqb-bundles-table-wrap').addClass('wpqb-hidden');
+                $('.wpqb-bundles-cards').removeClass('wpqb-hidden');
+            } else {
+                $('.wpqb-bundles-cards').addClass('wpqb-hidden');
+                $('.wpqb-bundles-table-wrap').removeClass('wpqb-hidden');
+            }
+        }
+
         /**
          * Prevent add to cart without bundle selection (optional)
          * Uncomment if you want to force bundle selection
@@ -353,6 +426,7 @@
         });
 
         sortBundleRowsByQty();
+        applySettingsToMarkup();
         if (pluginSettings.selectionMode === 'auto') {
             selectBundleByQty(getCurrentCartQty());
         }

@@ -1,5 +1,6 @@
 <?php
 
+
 function wpqb_plugin_has_active_required_plugins($plugin_name = '')
 {
     $plugins = [
@@ -25,15 +26,32 @@ function wpqb_plugin_get_default_settings()
 {
     return [
         'table_title' => __('Quantity Bundles', 'wpqb'),
+        'design_type' => 'table',
         'display_position' => 'woocommerce_before_add_to_cart_button',
         'selection_mode' => 'auto',
         'enable_simple_products' => 'yes',
         'enable_variable_products' => 'yes',
         'show_savings' => 'yes',
+        'show_discount_after_title' => 'yes',
         'show_selected_total' => 'yes',
+        'show_per_item_price' => 'yes',
+        'show_regular_price_when_sale' => 'yes',
+        'show_qty_after_per_item' => 'yes',
         'require_bundle_selection' => 'no',
         'cleanup_on_uninstall' => 'no',
         'shortcode_enabled' => 'yes',
+        'table_heading_bundle' => __('Bundle', 'wpqb'),
+        'table_heading_per_item' => __('Per Item', 'wpqb'),
+        'table_heading_total_price' => __('Total Price', 'wpqb'),
+        'table_head_bg_color' => '#084e86',
+        'table_head_text_color' => '#ffffff',
+        'table_body_bg_color' => '#ffffff',
+        'table_body_text_color' => '#1d2327',
+        'discount_bg_color' => '#e9f9ef',
+        'discount_text_color' => '#0f7a38',
+        'regular_price_color' => '#8a8a8a',
+        'sale_price_color' => '#d63638',
+        'strikethrough_price_color' => '#8a8a8a',
     ];
 }
 
@@ -54,6 +72,11 @@ function wpqb_plugin_sanitize_settings($settings)
     $positions = wpqb_plugin_get_display_positions();
 
     $sanitized['table_title'] = isset($settings['table_title']) ? sanitize_text_field(wp_unslash($settings['table_title'])) : $defaults['table_title'];
+    $sanitized['table_heading_bundle'] = isset($settings['table_heading_bundle']) ? sanitize_text_field(wp_unslash($settings['table_heading_bundle'])) : $defaults['table_heading_bundle'];
+    $sanitized['table_heading_per_item'] = isset($settings['table_heading_per_item']) ? sanitize_text_field(wp_unslash($settings['table_heading_per_item'])) : $defaults['table_heading_per_item'];
+    $sanitized['table_heading_total_price'] = isset($settings['table_heading_total_price']) ? sanitize_text_field(wp_unslash($settings['table_heading_total_price'])) : $defaults['table_heading_total_price'];
+
+    $sanitized['design_type'] = (isset($settings['design_type']) && 'cards' === $settings['design_type']) ? 'cards' : 'table';
 
     $sanitized['display_position'] = isset($settings['display_position'], $positions[$settings['display_position']])
         ? $settings['display_position']
@@ -61,11 +84,26 @@ function wpqb_plugin_sanitize_settings($settings)
 
     $sanitized['selection_mode'] = (isset($settings['selection_mode']) && 'manual' === $settings['selection_mode']) ? 'manual' : 'auto';
 
-    foreach (['enable_simple_products', 'enable_variable_products', 'show_savings', 'show_selected_total', 'require_bundle_selection', 'cleanup_on_uninstall', 'shortcode_enabled'] as $key) {
+    foreach (['enable_simple_products', 'enable_variable_products', 'show_savings', 'show_discount_after_title', 'show_selected_total', 'show_per_item_price', 'show_regular_price_when_sale', 'show_qty_after_per_item', 'require_bundle_selection', 'cleanup_on_uninstall', 'shortcode_enabled'] as $key) {
         $sanitized[$key] = (!empty($settings[$key]) && 'yes' === $settings[$key]) ? 'yes' : 'no';
     }
 
+    foreach (['table_head_bg_color', 'table_head_text_color', 'table_body_bg_color', 'table_body_text_color', 'discount_bg_color', 'discount_text_color', 'regular_price_color', 'sale_price_color', 'strikethrough_price_color'] as $color_key) {
+        $sanitized[$color_key] = wpqb_plugin_sanitize_hex_color(isset($settings[$color_key]) ? $settings[$color_key] : '', $defaults[$color_key]);
+    }
+
     return $sanitized;
+}
+
+function wpqb_plugin_sanitize_hex_color($value, $fallback)
+{
+    $value = sanitize_hex_color($value);
+
+    if (empty($value)) {
+        return $fallback;
+    }
+
+    return $value;
 }
 
 function wpqb_plugin_plugin_admin_notce()

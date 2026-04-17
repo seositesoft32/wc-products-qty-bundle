@@ -1,5 +1,21 @@
 /* WC Products Qty Bundle - Frontend Styles */
 
+:root {
+    --wpqb-table-head-bg: #084e86;
+    --wpqb-table-head-text: #ffffff;
+    --wpqb-table-body-bg: #ffffff;
+    --wpqb-table-body-text: #1d2327;
+    --wpqb-discount-bg: #e9f9ef;
+    --wpqb-discount-text: #0f7a38;
+    --wpqb-regular-price: #8a8a8a;
+    --wpqb-sale-price: #d63638;
+    --wpqb-cutoff-price: #8a8a8a;
+}
+
+.wpqb-hidden {
+    display: none !important;
+}
+
 .wpqb-bundles-frontend {
     margin: 20px 0 30px;
     /* padding: 20px; */
@@ -38,7 +54,7 @@
 .wpqb-bundles-table {
     width: 100%;
     border-collapse: collapse;
-    background: #fff;
+    background: var(--wpqb-table-body-bg);
     border: 1px solid #e3e3e3;
     margin: 0px !important;
 }
@@ -57,6 +73,7 @@
 .wpqb-bundles-table td {
     border: none;
     border-bottom: 1px solid #ececec;
+    color: var(--wpqb-table-body-text);
 }
 
 .wpqb-bundles-table td:first-child {
@@ -76,10 +93,15 @@
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    color: #ffffff;
-    background: #084e86;
-    border-color: #084e86;
+    color: var(--wpqb-table-head-text);
+    background: var(--wpqb-table-head-bg);
+    border-color: var(--wpqb-table-head-bg);
     text-align: left;
+}
+
+.wpqb-bundles-table.wpqb-hide-per-item th:nth-child(2),
+.wpqb-bundles-table.wpqb-hide-per-item td:nth-child(2) {
+    display: none;
 }
 
 .wpqb-bundle-option {
@@ -112,33 +134,104 @@
 
 .wpqb-bundle-price {
     font-weight: 700;
-    color: #2271b1;
+    color: var(--wpqb-sale-price);
 }
 
-.wpqb-bundle-price del {
-    color: #8a8a8a;
+.wpqb-bundle-price del,
+.wpqb-price-cutoff {
+    color: var(--wpqb-cutoff-price);
     font-weight: 400;
     margin-right: 6px;
 }
 
-.wpqb-bundle-price ins {
+.wpqb-bundle-price ins,
+.wpqb-price-sale {
     text-decoration: none;
-    color: #d63638;
+    color: var(--wpqb-sale-price);
+}
+
+.wpqb-price-regular {
+    color: var(--wpqb-regular-price);
 }
 
 .wpqb-bundle-savings {
     display: inline-block;
     font-size: 12px;
     font-weight: 600;
-    color: #0f7a38;
-    /* background: #e9f9ef; */
-    /* border: 1px solid #cfeedd; */
+    color: var(--wpqb-discount-text);
+    background: var(--wpqb-discount-bg);
     border-radius: 3px;
-    /* padding: 3px 8px; */
+    padding: 3px 8px;
 }
 
 .wpqb-empty {
     color: #8a8a8a;
+}
+
+.wpqb-bundles-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.wpqb-bundle-card {
+    background: var(--wpqb-table-body-bg);
+    color: var(--wpqb-table-body-text);
+    border: 1px solid #e1e3e5;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.wpqb-bundle-card:hover {
+    border-color: #84b7df;
+    box-shadow: 0 6px 18px rgba(9, 76, 133, 0.08);
+}
+
+.wpqb-bundle-card.selected {
+    border-color: #005284;
+    box-shadow: 0 0 0 2px rgba(0, 82, 132, 0.15);
+}
+
+.wpqb-card-media {
+    aspect-ratio: 4 / 3;
+    background: #eff3f7;
+    overflow: hidden;
+}
+
+.wpqb-card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.wpqb-card-media-empty {
+    background: linear-gradient(120deg, #eef3f8, #dbe7f2);
+}
+
+.wpqb-card-content {
+    padding: 12px;
+}
+
+.wpqb-card-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.wpqb-card-per-item {
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.wpqb-card-total {
+    font-size: 15px;
 }
 
 @media (max-width: 768px) {
@@ -152,6 +245,10 @@
     .wpqb-bundle-image {
         width: 44px;
         height: 44px;
+    }
+
+    .wpqb-bundles-cards {
+        grid-template-columns: 1fr;
     }
 }
 

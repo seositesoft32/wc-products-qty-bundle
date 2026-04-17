@@ -327,20 +327,18 @@
                                placeholder="0.00"
                                class="short wc_input_price" />
                     </p>
+                    <p class="wpqb-form-field wpqb-image-field">
+                        <label>Bundle Image</label>
+                        <span class="wpqb-image-preview"></span>
+                        <input type="hidden"
+                               name="${namePrefix}[${index}][image_id]"
+                               class="wpqb-image-id"
+                               value="" />
+                        <button type="button" class="button wpqb-upload-image">Upload Image</button>
+                        <button type="button" class="button wpqb-remove-image" style="display:none;">Remove Image</button>
+                    </p>
                 </div>
             </div>`;
-
-
-        // <p class="wpqb-form-field wpqb-image-field">
-        //     <label>Bundle Image</label>
-        //     <div class="wpqb-image-preview"></div>
-        //     <input type="hidden" 
-        //            name="${namePrefix}[${index}][image_id]" 
-        //            class="wpqb-image-id"
-        //            value="" />
-        //     <button type="button" class="button wpqb-upload-image">Upload Image</button>
-        //     <button type="button" class="button wpqb-remove-image" style="display:none;">Remove Image</button>
-        // </p>
     }
 
     /**
