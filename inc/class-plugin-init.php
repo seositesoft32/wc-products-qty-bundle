@@ -228,6 +228,89 @@ class WPQB_Plugin_init
     }
 
     /**
+     * Check if a bundle list contains at least one usable bundle row.
+     */
+    private function has_valid_bundles($bundles)
+    {
+        if (!is_array($bundles) || empty($bundles)) {
+            return false;
+        }
+
+        foreach ($bundles as $bundle) {
+            $qty = isset($bundle['qty']) ? absint($bundle['qty']) : 0;
+            if ($qty > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if product (simple or variable) has at least one valid bundle configured.
+     */
+    private function product_has_any_valid_bundles($product)
+    {
+        if (!$product || !is_a($product, 'WC_Product')) {
+            return false;
+        }
+
+        if ($product->is_type('variable')) {
+            $variation_ids = $product->get_children();
+            if (empty($variation_ids)) {
+                return false;
+            }
+
+            foreach ($variation_ids as $variation_id) {
+                $variation_bundles = get_post_meta($variation_id, '_wpqb_qty_bundles', true);
+                if ($this->has_valid_bundles($variation_bundles)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        $bundles = get_post_meta($product->get_id(), '_wpqb_qty_bundles', true);
+        return $this->has_valid_bundles($bundles);
+    }
+
+    /**
+     * Validate posted bundle payload against configured product/variation bundles.
+     */
+    private function is_posted_bundle_valid_for_product($bundle_data, $product_id, $variation_id = 0)
+    {
+        if (!is_array($bundle_data)) {
+            return false;
+        }
+
+        $posted_index = isset($bundle_data['bundle_index']) ? intval($bundle_data['bundle_index']) : -1;
+        $posted_qty = isset($bundle_data['qty']) ? absint($bundle_data['qty']) : 0;
+
+        if ($posted_index < 0 || $posted_qty <= 0) {
+            return false;
+        }
+
+        $source_id = $variation_id > 0 ? $variation_id : $product_id;
+        $configured_bundles = get_post_meta($source_id, '_wpqb_qty_bundles', true);
+
+        if (!$this->has_valid_bundles($configured_bundles)) {
+            return false;
+        }
+
+        if (!isset($configured_bundles[$posted_index])) {
+            return false;
+        }
+
+        $configured_qty = isset($configured_bundles[$posted_index]['qty']) ? absint($configured_bundles[$posted_index]['qty']) : 0;
+        if ($configured_qty <= 0) {
+            return false;
+        }
+
+        return $configured_qty === $posted_qty;
+    }
+
+    /**
      * Resolve a product regular price with safe fallback to current price.
      */
     private function get_product_regular_price_value($product)
@@ -275,10 +358,14 @@ class WPQB_Plugin_init
             return;
         }
 
+        if (!$this->product_has_any_valid_bundles($product)) {
+            return;
+        }
+
         $is_variable = $product->is_type('variable');
         $bundles = $is_variable ? [] : get_post_meta($product->get_id(), '_wpqb_qty_bundles', true);
 
-        if (!$is_variable && (!is_array($bundles) || empty($bundles))) {
+        if (!$is_variable && !$this->has_valid_bundles($bundles)) {
             return;
         }
         ?>
@@ -435,10 +522,25 @@ class WPQB_Plugin_init
      */
     public function enqueue_frontend_assets()
     {
-        if (is_product()) {
-            wp_enqueue_style('wpqb-frontend-css', wpqb_plugin_plugin_URL . 'assets/css/frontend.css', [], wpqb_plugin_info['v']);
-            wp_enqueue_script('wpqb-frontend-js', wpqb_plugin_plugin_URL . 'assets/js/frontend.js', ['jquery'], wpqb_plugin_info['v'], true);
+        if (!is_product()) {
+            return;
         }
+
+        $product_id = get_the_ID();
+        if (!$product_id) {
+            $product_id = get_queried_object_id();
+        }
+        if (!$product_id) {
+            return;
+        }
+
+        $product = wc_get_product($product_id);
+        if (!$this->product_has_any_valid_bundles($product)) {
+            return;
+        }
+
+        wp_enqueue_style('wpqb-frontend-css', wpqb_plugin_plugin_URL . 'assets/css/frontend.css', [], wpqb_plugin_info['v']);
+        wp_enqueue_script('wpqb-frontend-js', wpqb_plugin_plugin_URL . 'assets/js/frontend.js', ['jquery'], wpqb_plugin_info['v'], true);
     }
 
     /**
@@ -455,6 +557,10 @@ class WPQB_Plugin_init
                 $total_regular_price = floatval($bundle_data['regular_price']);
                 $total_sale_price = floatval($bundle_data['sale_price']);
                 $variation_id = isset($_POST['variation_id']) ? absint($_POST['variation_id']) : 0;
+
+                if (!$this->is_posted_bundle_valid_for_product($bundle_data, $product_id, $variation_id)) {
+                    return $cart_item_data;
+                }
 
                 if ($total_regular_price <= 0 && $qty > 0) {
                     $source_product_id = $variation_id > 0 ? $variation_id : $product_id;
