@@ -169,6 +169,11 @@ class WPQB_Plugin_Init
             return;
         }
 
+        $product = wc_get_product(get_queried_object_id());
+        if (!$product instanceof WC_Product || !$this->product_or_variations_have_bundles($product)) {
+            return;
+        }
+
         wp_enqueue_style('wpqb-frontend-css', WPQB_PLUGIN_URL . 'assets/css/frontend.css', [], WPQB_PLUGIN_VERSION);
         wp_enqueue_script('wpqb-frontend-js', WPQB_PLUGIN_URL . 'assets/js/frontend.js', ['jquery'], WPQB_PLUGIN_VERSION, true);
         wp_localize_script(
@@ -249,47 +254,38 @@ class WPQB_Plugin_Init
             <div class="wpqb-bundle-fields">
                 <p class="wpqb-form-field wpqb-name-field">
                     <label><?php esc_html_e('Bundle Name', 'wpqb'); ?></label>
-                    <input type="text"
-                        name="<?php echo esc_attr($name_prefix); ?>[<?php echo esc_attr($index); ?>][name]"
+                    <input type="text" name="<?php echo esc_attr($name_prefix); ?>[<?php echo esc_attr($index); ?>][name]"
                         value="<?php echo esc_attr($bundle_name); ?>"
                         placeholder="<?php echo esc_attr__('e.g., Starter Pack, Family Bundle', 'wpqb'); ?>" />
                 </p>
                 <p class="wpqb-form-field">
                     <label><?php esc_html_e('Quantity', 'wpqb'); ?></label>
-                    <input type="number"
-                        name="<?php echo esc_attr($name_prefix); ?>[<?php echo esc_attr($index); ?>][qty]"
-                        value="<?php echo esc_attr($qty); ?>"
-                        placeholder="<?php echo esc_attr__('e.g., 10', 'wpqb'); ?>"
-                        min="1"
-                        step="1" />
+                    <input type="number" name="<?php echo esc_attr($name_prefix); ?>[<?php echo esc_attr($index); ?>][qty]"
+                        value="<?php echo esc_attr($qty); ?>" placeholder="<?php echo esc_attr__('e.g., 10', 'wpqb'); ?>"
+                        min="1" step="1" />
                 </p>
                 <p class="wpqb-form-field">
                     <label><?php esc_html_e('Regular Price', 'wpqb'); ?></label>
                     <input type="text"
                         name="<?php echo esc_attr($name_prefix); ?>[<?php echo esc_attr($index); ?>][regular_price]"
-                        value="<?php echo esc_attr($regular_price); ?>"
-                        placeholder="<?php echo esc_attr__('0.00', 'wpqb'); ?>"
+                        value="<?php echo esc_attr($regular_price); ?>" placeholder="<?php echo esc_attr__('0.00', 'wpqb'); ?>"
                         class="short wc_input_price" />
                 </p>
                 <p class="wpqb-form-field">
                     <label><?php esc_html_e('Sale Price', 'wpqb'); ?></label>
-                    <input type="text"
-                        name="<?php echo esc_attr($name_prefix); ?>[<?php echo esc_attr($index); ?>][sale_price]"
-                        value="<?php echo esc_attr($sale_price); ?>"
-                        placeholder="<?php echo esc_attr__('0.00', 'wpqb'); ?>"
+                    <input type="text" name="<?php echo esc_attr($name_prefix); ?>[<?php echo esc_attr($index); ?>][sale_price]"
+                        value="<?php echo esc_attr($sale_price); ?>" placeholder="<?php echo esc_attr__('0.00', 'wpqb'); ?>"
                         class="short wc_input_price" />
                 </p>
                 <p class="wpqb-form-field wpqb-image-field">
                     <label><?php esc_html_e('Bundle Image', 'wpqb'); ?></label>
                     <span class="wpqb-image-preview">
-                        <?php if ($image_url) : ?>
+                        <?php if ($image_url): ?>
                             <img src="<?php echo esc_url($image_url); ?>" alt="" style="max-width: 100px; max-height: 100px;" />
                         <?php endif; ?>
                     </span>
-                    <input type="hidden"
-                        name="<?php echo esc_attr($name_prefix); ?>[<?php echo esc_attr($index); ?>][image_id]"
-                        class="wpqb-image-id"
-                        value="<?php echo esc_attr($image_id); ?>" />
+                    <input type="hidden" name="<?php echo esc_attr($name_prefix); ?>[<?php echo esc_attr($index); ?>][image_id]"
+                        class="wpqb-image-id" value="<?php echo esc_attr($image_id); ?>" />
                     <button type="button" class="button wpqb-upload-image"><?php esc_html_e('Upload Image', 'wpqb'); ?></button>
                     <button type="button" class="button wpqb-remove-image" <?php echo $image_url ? '' : 'style="display:none;"'; ?>><?php esc_html_e('Remove Image', 'wpqb'); ?></button>
                 </p>
@@ -364,6 +360,10 @@ class WPQB_Plugin_Init
             return;
         }
 
+        if (!$this->product_or_variations_have_bundles($product)) {
+            return;
+        }
+
         echo $this->get_bundles_markup($product, true);
     }
 
@@ -400,12 +400,17 @@ class WPQB_Plugin_Init
             return '';
         }
 
+        if ($is_variable && !$this->product_or_variations_have_bundles($product)) {
+            return '';
+        }
+
         ob_start();
         ?>
-        <div class="wpqb-bundles-frontend wpqb-design-<?php echo esc_attr($this->settings['design_type']); ?><?php echo $is_primary_product_form ? '' : ' wpqb-bundles-shortcode'; ?>" style="<?php echo esc_attr($inline_style); ?>">
+        <div class="wpqb-bundles-frontend wpqb-design-<?php echo esc_attr($this->settings['design_type']); ?><?php echo $is_primary_product_form ? '' : ' wpqb-bundles-shortcode'; ?>"
+            style="<?php echo esc_attr($inline_style); ?>">
             <h3 class="wpqb-bundles-title"><?php echo esc_html($this->settings['table_title']); ?></h3>
             <input type="hidden" name="wpqb_selected_bundle" id="wpqb-selected-bundle" value="" />
-            <?php if ($is_variable) : ?>
+            <?php if ($is_variable): ?>
                 <p class="wpqb-bundles-placeholder"><?php esc_html_e('Select product options to view bundles.', 'wpqb'); ?></p>
             <?php endif; ?>
             <div class="wpqb-bundles-list">
@@ -414,7 +419,7 @@ class WPQB_Plugin_Init
                         <thead>
                             <tr>
                                 <th><?php echo esc_html($this->settings['table_heading_bundle']); ?></th>
-                                <?php if ('yes' === $this->settings['show_per_item_price']) : ?>
+                                <?php if ('yes' === $this->settings['show_per_item_price']): ?>
                                     <th><?php echo esc_html($this->settings['table_heading_per_item']); ?></th>
                                 <?php endif; ?>
                                 <th><?php echo esc_html($this->settings['table_heading_total_price']); ?></th>
@@ -452,7 +457,7 @@ class WPQB_Plugin_Init
                 </div>
             </div>
         </div>
-        <p class="wpqb-selected-total" id="wpqb-selected-total"<?php echo ('yes' === $this->settings['show_selected_total']) ? '' : ' style="display:none;"'; ?>></p>
+        <p class="wpqb-selected-total" id="wpqb-selected-total" <?php echo ('yes' === $this->settings['show_selected_total']) ? '' : ' style="display:none;"'; ?>></p>
         <?php
 
         return ob_get_clean();
@@ -489,8 +494,7 @@ class WPQB_Plugin_Init
 
         ob_start();
         ?>
-        <tr class="wpqb-bundle-option"
-            data-bundle-index="<?php echo esc_attr($pricing['bundle_index']); ?>"
+        <tr class="wpqb-bundle-option" data-bundle-index="<?php echo esc_attr($pricing['bundle_index']); ?>"
             data-bundle-name="<?php echo esc_attr($pricing['bundle_name']); ?>"
             data-qty="<?php echo esc_attr($pricing['tier_qty']); ?>"
             data-price="<?php echo esc_attr($pricing['total_price']); ?>"
@@ -500,7 +504,7 @@ class WPQB_Plugin_Init
                 <span class="wpqb-bundle-name"><?php echo esc_html($bundle_name); ?></span>
                 <?php echo wp_kses_post($savings_html); ?>
             </td>
-            <?php if ('yes' === $this->settings['show_per_item_price']) : ?>
+            <?php if ('yes' === $this->settings['show_per_item_price']): ?>
                 <td class="wpqb-col-per-item">
                     <?php echo esc_html($per_item_text); ?>
                 </td>
@@ -553,8 +557,7 @@ class WPQB_Plugin_Init
 
         ob_start();
         ?>
-        <div class="wpqb-bundle-card wpqb-bundle-option"
-            data-bundle-index="<?php echo esc_attr($pricing['bundle_index']); ?>"
+        <div class="wpqb-bundle-card wpqb-bundle-option" data-bundle-index="<?php echo esc_attr($pricing['bundle_index']); ?>"
             data-bundle-name="<?php echo esc_attr($pricing['bundle_name']); ?>"
             data-qty="<?php echo esc_attr($pricing['tier_qty']); ?>"
             data-price="<?php echo esc_attr($pricing['total_price']); ?>"
@@ -566,7 +569,7 @@ class WPQB_Plugin_Init
                     <span class="wpqb-bundle-name"><?php echo esc_html($bundle_name); ?></span>
                     <?php echo wp_kses_post($discount_html); ?>
                 </div>
-                <?php if ('yes' === $this->settings['show_per_item_price']) : ?>
+                <?php if ('yes' === $this->settings['show_per_item_price']): ?>
                     <div class="wpqb-card-per-item"><?php echo esc_html($per_item_text); ?></div>
                 <?php endif; ?>
                 <div class="wpqb-card-total wpqb-bundle-price"><?php echo wp_kses_post($price_html); ?></div>
@@ -825,6 +828,25 @@ class WPQB_Plugin_Init
     private function product_has_bundles($product_id)
     {
         return !empty($this->get_product_bundles($product_id));
+    }
+
+    private function product_or_variations_have_bundles($product)
+    {
+        if (!$product instanceof WC_Product) {
+            return false;
+        }
+
+        if ($product->is_type('variable')) {
+            foreach ($product->get_children() as $variation_id) {
+                if ($this->product_has_bundles($variation_id)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return $this->product_has_bundles($product->get_id());
     }
 
     private function is_product_type_enabled($product)
