@@ -335,7 +335,7 @@ class WPQB_Plugin_Init
     {
         unset($index);
 
-        if (!$this->can_save_product_bundles($variation_id)) {
+        if (!$this->can_save_variation_bundles($variation_id)) {
             return;
         }
 
@@ -762,6 +762,27 @@ class WPQB_Plugin_Init
         }
 
         return (bool) wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['woocommerce_meta_nonce'])), 'woocommerce_save_data');
+    }
+
+    private function can_save_variation_bundles($variation_id)
+    {
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return false;
+        }
+
+        if (!current_user_can('edit_post', $variation_id)) {
+            return false;
+        }
+
+        if (!empty($_POST['security'])) {
+            return (bool) wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['security'])), 'save-variations');
+        }
+
+        if (!empty($_POST['woocommerce_meta_nonce'])) {
+            return (bool) wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['woocommerce_meta_nonce'])), 'woocommerce_save_data');
+        }
+
+        return false;
     }
 
     private function sanitize_bundles($raw_bundles)
