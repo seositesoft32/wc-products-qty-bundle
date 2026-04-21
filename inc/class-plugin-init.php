@@ -26,7 +26,11 @@ class WPQB_Plugin_Init
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
 
-        add_action($this->get_display_hook(), [$this, 'display_qty_bundles']);
+        $display_hook = $this->get_display_hook();
+        if (!empty($display_hook)) {
+            add_action($display_hook, [$this, 'display_qty_bundles']);
+        }
+
         add_shortcode('wpqb_bundles', [$this, 'render_bundles_shortcode']);
 
         add_filter('woocommerce_available_variation', [$this, 'append_variation_bundle_data'], 10, 3);
@@ -165,7 +169,18 @@ class WPQB_Plugin_Init
 
     public function enqueue_frontend_assets()
     {
-        if (!is_product()) {
+        $load_assets = false;
+
+        if (is_product()) {
+            $load_assets = true;
+        } elseif (is_singular()) {
+            global $post;
+            if ($post instanceof WP_Post && has_shortcode($post->post_content, 'wpqb_bundles')) {
+                $load_assets = true;
+            }
+        }
+
+        if (!$load_assets) {
             return;
         }
 
@@ -189,13 +204,15 @@ class WPQB_Plugin_Init
                 'showPerItemPrice' => ('yes' === $this->settings['show_per_item_price']),
                 'showRegularPriceWhenSale' => ('yes' === $this->settings['show_regular_price_when_sale']),
                 'showQtyAfterPerItem' => ('yes' === $this->settings['show_qty_after_per_item']),
+                'enableBundleSorting' => ('yes' === $this->settings['enable_bundle_sorting']),
+                'autoSelectByQtyChange' => ('yes' === $this->settings['auto_select_by_qty_change']),
                 'headings' => [
-                    'bundle' => $this->settings['table_heading_bundle'],
-                    'perItem' => $this->settings['table_heading_per_item'],
-                    'totalPrice' => $this->settings['table_heading_total_price'],
+                    'bundle' => !empty($this->settings['table_heading_bundle']) ? $this->settings['table_heading_bundle'] : __('Bundle', 'wpqb'),
+                    'perItem' => !empty($this->settings['table_heading_per_item']) ? $this->settings['table_heading_per_item'] : __('Per Item', 'wpqb'),
+                    'totalPrice' => !empty($this->settings['table_heading_total_price']) ? $this->settings['table_heading_total_price'] : __('Total Price', 'wpqb'),
                 ],
                 'i18n' => [
-                    'selectVariation' => __('Select product options to view bundles.', 'wpqb'),
+                    'selectVariation' => !empty($this->settings['variable_placeholder_text']) ? $this->settings['variable_placeholder_text'] : __('Select product options to view bundles.', 'wpqb'),
                     'noBundles' => __('No bundles found for this variation.', 'wpqb'),
                     'chooseBundle' => __('Please select a bundle before adding this product to your cart.', 'wpqb'),
                     'savePrefix' => __('Save', 'wpqb'),
@@ -369,10 +386,6 @@ class WPQB_Plugin_Init
 
     public function render_bundles_shortcode($atts)
     {
-        if ('yes' !== $this->settings['shortcode_enabled']) {
-            return '';
-        }
-
         $atts = shortcode_atts(
             [
                 'product_id' => get_the_ID(),
@@ -396,6 +409,10 @@ class WPQB_Plugin_Init
         $is_table = ('table' === $this->settings['design_type']);
         $inline_style = $this->get_frontend_inline_style();
 
+        if (!$is_variable && 'yes' === $this->settings['enable_bundle_sorting']) {
+            $bundles = $this->sort_bundles_by_qty($bundles);
+        }
+
         if (!$is_variable && empty($bundles)) {
             return '';
         }
@@ -408,21 +425,21 @@ class WPQB_Plugin_Init
         ?>
         <div class="wpqb-bundles-frontend wpqb-design-<?php echo esc_attr($this->settings['design_type']); ?><?php echo $is_primary_product_form ? '' : ' wpqb-bundles-shortcode'; ?>"
             style="<?php echo esc_attr($inline_style); ?>">
-            <h3 class="wpqb-bundles-title"><?php echo esc_html($this->settings['table_title']); ?></h3>
+            <h3 class="wpqb-bundles-title"><?php echo esc_html(!empty($this->settings['table_title']) ? $this->settings['table_title'] : __('Quantity Bundles', 'wpqb')); ?></h3>
             <input type="hidden" name="wpqb_selected_bundle" id="wpqb-selected-bundle" value="" />
             <?php if ($is_variable): ?>
-                <p class="wpqb-bundles-placeholder"><?php esc_html_e('Select product options to view bundles.', 'wpqb'); ?></p>
+                <p class="wpqb-bundles-placeholder"><?php echo esc_html(!empty($this->settings['variable_placeholder_text']) ? $this->settings['variable_placeholder_text'] : __('Select product options to view bundles.', 'wpqb')); ?></p>
             <?php endif; ?>
             <div class="wpqb-bundles-list">
                 <div class="wpqb-bundles-table-wrap<?php echo $is_table ? '' : ' wpqb-hidden'; ?>">
                     <table class="wpqb-bundles-table">
                         <thead>
                             <tr>
-                                <th><?php echo esc_html($this->settings['table_heading_bundle']); ?></th>
+                                <th><?php echo esc_html(!empty($this->settings['table_heading_bundle']) ? $this->settings['table_heading_bundle'] : __('Bundle', 'wpqb')); ?></th>
                                 <?php if ('yes' === $this->settings['show_per_item_price']): ?>
-                                    <th><?php echo esc_html($this->settings['table_heading_per_item']); ?></th>
+                                    <th><?php echo esc_html(!empty($this->settings['table_heading_per_item']) ? $this->settings['table_heading_per_item'] : __('Per Item', 'wpqb')); ?></th>
                                 <?php endif; ?>
-                                <th><?php echo esc_html($this->settings['table_heading_total_price']); ?></th>
+                                <th><?php echo esc_html(!empty($this->settings['table_heading_total_price']) ? $this->settings['table_heading_total_price'] : __('Total Price', 'wpqb')); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -585,6 +602,10 @@ class WPQB_Plugin_Init
         unset($product);
 
         $bundles = $this->get_product_bundles($variation->get_id());
+        if ('yes' === $this->settings['enable_bundle_sorting']) {
+            $bundles = $this->sort_bundles_by_qty($bundles);
+        }
+
         $prepared_bundles = [];
 
         foreach ($bundles as $index => $bundle) {
@@ -815,13 +836,6 @@ class WPQB_Plugin_Init
             ];
         }
 
-        usort(
-            $bundles,
-            static function ($left, $right) {
-                return $left['qty'] <=> $right['qty'];
-            }
-        );
-
         return array_values($bundles);
     }
 
@@ -884,6 +898,10 @@ class WPQB_Plugin_Init
         $positions = wpqb_plugin_get_display_positions();
         $position = isset($this->settings['display_position']) ? $this->settings['display_position'] : '';
 
+        if ('shortcode_only' === $position) {
+            return '';
+        }
+
         return isset($positions[$position]) ? $position : 'woocommerce_before_add_to_cart_button';
     }
 
@@ -927,10 +945,12 @@ class WPQB_Plugin_Init
     private function find_matching_bundle_for_quantity($bundles, $quantity)
     {
         $match = [];
+        $best_tier_qty = 0;
 
         foreach ($bundles as $index => $bundle) {
             $tier_qty = isset($bundle['qty']) ? absint($bundle['qty']) : 0;
-            if ($tier_qty > 0 && $quantity >= $tier_qty) {
+            if ($tier_qty > 0 && $quantity >= $tier_qty && $tier_qty >= $best_tier_qty) {
+                $best_tier_qty = $tier_qty;
                 $match = [
                     'index' => $index,
                     'bundle' => $bundle,
@@ -939,6 +959,23 @@ class WPQB_Plugin_Init
         }
 
         return $match;
+    }
+
+    private function sort_bundles_by_qty($bundles)
+    {
+        $bundles = is_array($bundles) ? $bundles : [];
+
+        usort(
+            $bundles,
+            static function ($left, $right) {
+                $left_qty = isset($left['qty']) ? absint($left['qty']) : 0;
+                $right_qty = isset($right['qty']) ? absint($right['qty']) : 0;
+
+                return $left_qty <=> $right_qty;
+            }
+        );
+
+        return array_values($bundles);
     }
 
     private function build_bundle_pricing_data($product, $bundle, $bundle_index, $cart_qty)
@@ -986,9 +1023,19 @@ class WPQB_Plugin_Init
             '--wpqb-table-head-text' => 'table_head_text_color',
             '--wpqb-table-body-bg' => 'table_body_bg_color',
             '--wpqb-table-body-text' => 'table_body_text_color',
+            '--wpqb-table-border' => 'table_border_color',
+            '--wpqb-table-cell-border' => 'table_cell_border_color',
+            '--wpqb-table-hover-bg' => 'table_hover_bg_color',
+            '--wpqb-table-selected-bg' => 'table_selected_bg_color',
+            '--wpqb-table-selected-border' => 'table_selected_border_color',
+            '--wpqb-title-bg' => 'table_title_bg_color',
+            '--wpqb-title-text' => 'table_title_text_color',
             '--wpqb-card-bg' => 'card_bg_color',
             '--wpqb-card-text' => 'card_text_color',
             '--wpqb-card-border' => 'card_border_color',
+            '--wpqb-card-hover-border' => 'card_hover_border_color',
+            '--wpqb-card-selected-border' => 'card_selected_border_color',
+            '--wpqb-card-media-bg' => 'card_media_bg_color',
             '--wpqb-discount-bg' => 'discount_bg_color',
             '--wpqb-discount-text' => 'discount_text_color',
             '--wpqb-regular-price' => 'regular_price_color',
@@ -1003,6 +1050,8 @@ class WPQB_Plugin_Init
                 $parts[] = sprintf('%s:%s', $css_var, sanitize_hex_color($this->settings[$setting_key]));
             }
         }
+
+        $parts[] = '--wpqb-card-radius:' . max(0, min(40, absint($this->settings['card_radius']))) . 'px';
 
         return implode(';', $parts);
     }

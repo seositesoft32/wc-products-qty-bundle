@@ -26,6 +26,7 @@ function wpqb_plugin_get_default_settings()
 {
     return [
         'table_title' => __('Quantity Bundles', 'wpqb'),
+        'variable_placeholder_text' => __('Select product options to view bundles.', 'wpqb'),
         'design_type' => 'table',
         'display_position' => 'woocommerce_before_add_to_cart_button',
         'selection_mode' => 'auto',
@@ -38,18 +39,30 @@ function wpqb_plugin_get_default_settings()
         'show_regular_price_when_sale' => 'yes',
         'show_qty_after_per_item' => 'yes',
         'require_bundle_selection' => 'no',
+        'enable_bundle_sorting' => 'yes',
+        'auto_select_by_qty_change' => 'yes',
         'cleanup_on_uninstall' => 'no',
-        'shortcode_enabled' => 'yes',
         'table_heading_bundle' => __('Bundle', 'wpqb'),
         'table_heading_per_item' => __('Per Item', 'wpqb'),
         'table_heading_total_price' => __('Total Price', 'wpqb'),
+        'table_title_bg_color' => '#0a5998',
+        'table_title_text_color' => '#ffffff',
         'table_head_bg_color' => '#084e86',
         'table_head_text_color' => '#ffffff',
         'table_body_bg_color' => '#ffffff',
         'table_body_text_color' => '#1d2327',
+        'table_border_color' => '#e3e3e3',
+        'table_cell_border_color' => '#ececec',
+        'table_hover_bg_color' => '#f7fbff',
+        'table_selected_bg_color' => '#edf5fd',
+        'table_selected_border_color' => '#005284',
         'card_bg_color' => '#ffffff',
         'card_text_color' => '#1d2327',
         'card_border_color' => '#e1e3e5',
+        'card_hover_border_color' => '#84b7df',
+        'card_selected_border_color' => '#005284',
+        'card_media_bg_color' => '#eff3f7',
+        'card_radius' => '10',
         'discount_bg_color' => '#e9f9ef',
         'discount_text_color' => '#0f7a38',
         'regular_price_color' => '#8a8a8a',
@@ -64,6 +77,7 @@ function wpqb_plugin_get_display_positions()
         'woocommerce_before_add_to_cart_button' => __('Before add to cart button', 'wpqb'),
         'woocommerce_after_add_to_cart_button' => __('After add to cart button', 'wpqb'),
         'woocommerce_single_product_summary' => __('Inside product summary', 'wpqb'),
+        'shortcode_only' => __('Shortcode only (no WooCommerce hook output)', 'wpqb'),
     ];
 }
 
@@ -75,6 +89,7 @@ function wpqb_plugin_sanitize_settings($settings)
     $positions = wpqb_plugin_get_display_positions();
 
     $sanitized['table_title'] = isset($settings['table_title']) ? sanitize_text_field(wp_unslash($settings['table_title'])) : $defaults['table_title'];
+    $sanitized['variable_placeholder_text'] = isset($settings['variable_placeholder_text']) ? sanitize_text_field(wp_unslash($settings['variable_placeholder_text'])) : $defaults['variable_placeholder_text'];
     $sanitized['table_heading_bundle'] = isset($settings['table_heading_bundle']) ? sanitize_text_field(wp_unslash($settings['table_heading_bundle'])) : $defaults['table_heading_bundle'];
     $sanitized['table_heading_per_item'] = isset($settings['table_heading_per_item']) ? sanitize_text_field(wp_unslash($settings['table_heading_per_item'])) : $defaults['table_heading_per_item'];
     $sanitized['table_heading_total_price'] = isset($settings['table_heading_total_price']) ? sanitize_text_field(wp_unslash($settings['table_heading_total_price'])) : $defaults['table_heading_total_price'];
@@ -87,13 +102,15 @@ function wpqb_plugin_sanitize_settings($settings)
 
     $sanitized['selection_mode'] = (isset($settings['selection_mode']) && 'manual' === $settings['selection_mode']) ? 'manual' : 'auto';
 
-    foreach (['enable_simple_products', 'enable_variable_products', 'show_savings', 'show_discount_after_title', 'show_selected_total', 'show_per_item_price', 'show_regular_price_when_sale', 'show_qty_after_per_item', 'require_bundle_selection', 'cleanup_on_uninstall', 'shortcode_enabled'] as $key) {
+    foreach (['enable_simple_products', 'enable_variable_products', 'show_savings', 'show_discount_after_title', 'show_selected_total', 'show_per_item_price', 'show_regular_price_when_sale', 'show_qty_after_per_item', 'require_bundle_selection', 'enable_bundle_sorting', 'auto_select_by_qty_change', 'cleanup_on_uninstall'] as $key) {
         $sanitized[$key] = (!empty($settings[$key]) && 'yes' === $settings[$key]) ? 'yes' : 'no';
     }
 
-    foreach (['table_head_bg_color', 'table_head_text_color', 'table_body_bg_color', 'table_body_text_color', 'card_bg_color', 'card_text_color', 'card_border_color', 'discount_bg_color', 'discount_text_color', 'regular_price_color', 'sale_price_color', 'strikethrough_price_color'] as $color_key) {
+    foreach (['table_title_bg_color', 'table_title_text_color', 'table_head_bg_color', 'table_head_text_color', 'table_body_bg_color', 'table_body_text_color', 'table_border_color', 'table_cell_border_color', 'table_hover_bg_color', 'table_selected_bg_color', 'table_selected_border_color', 'card_bg_color', 'card_text_color', 'card_border_color', 'card_hover_border_color', 'card_selected_border_color', 'card_media_bg_color', 'discount_bg_color', 'discount_text_color', 'regular_price_color', 'sale_price_color', 'strikethrough_price_color'] as $color_key) {
         $sanitized[$color_key] = wpqb_plugin_sanitize_hex_color(isset($settings[$color_key]) ? $settings[$color_key] : '', $defaults[$color_key]);
     }
+
+    $sanitized['card_radius'] = isset($settings['card_radius']) ? max(0, min(40, absint($settings['card_radius']))) : absint($defaults['card_radius']);
 
     return $sanitized;
 }

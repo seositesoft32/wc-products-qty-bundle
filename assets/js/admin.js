@@ -163,9 +163,25 @@
         function syncDesignPanels() {
             const design = $('#wpqb_design_type').val();
             const isCards = 'cards' === design;
+            const $tableTab = $tabs.filter('[data-tab="table-style"]');
+            const $cardsTab = $tabs.filter('[data-tab="cards-style"]');
 
-            $tabs.filter('[data-tab="table-style"]').toggleClass('is-muted', isCards);
-            $tabs.filter('[data-tab="cards-style"]').toggleClass('is-muted', !isCards);
+            $tableTab.toggle(!isCards);
+            $cardsTab.toggle(isCards);
+
+            $tableTab.toggleClass('is-muted', isCards);
+            $cardsTab.toggleClass('is-muted', !isCards);
+
+            const $activeTab = $tabs.filter('.is-active');
+            const activeId = $activeTab.data('tab');
+
+            if (isCards && 'table-style' === activeId) {
+                switchTab('cards-style');
+            }
+
+            if (!isCards && 'cards-style' === activeId) {
+                switchTab('table-style');
+            }
         }
 
         $tabs.on('click', function () {

@@ -70,6 +70,11 @@ $shortcode_example = isset($shortcode_example) ? $shortcode_example : '[wpqb_bun
                             <label for="wpqb_table_title"><?php esc_html_e('Main title', 'wpqb'); ?></label>
                             <input type="text" id="wpqb_table_title" name="wpqb_plugin_setting[table_title]" value="<?php echo esc_attr($settings['table_title']); ?>" />
                         </div>
+
+                        <div class="wpqb-field-card">
+                            <label for="wpqb_variable_placeholder_text"><?php esc_html_e('Variation placeholder text', 'wpqb'); ?></label>
+                            <input type="text" id="wpqb_variable_placeholder_text" name="wpqb_plugin_setting[variable_placeholder_text]" value="<?php echo esc_attr($settings['variable_placeholder_text']); ?>" />
+                        </div>
                     </div>
 
                     <div class="wpqb-checklist-grid">
@@ -111,10 +116,17 @@ $shortcode_example = isset($shortcode_example) ? $shortcode_example : '[wpqb_bun
                     </div>
 
                     <div class="wpqb-color-grid">
+                        <label><?php esc_html_e('Title background', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[table_title_bg_color]" value="<?php echo esc_attr($settings['table_title_bg_color']); ?>" /></label>
+                        <label><?php esc_html_e('Title text', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[table_title_text_color]" value="<?php echo esc_attr($settings['table_title_text_color']); ?>" /></label>
                         <label><?php esc_html_e('Table head background', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[table_head_bg_color]" value="<?php echo esc_attr($settings['table_head_bg_color']); ?>" /></label>
                         <label><?php esc_html_e('Table head text', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[table_head_text_color]" value="<?php echo esc_attr($settings['table_head_text_color']); ?>" /></label>
                         <label><?php esc_html_e('Table body background', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[table_body_bg_color]" value="<?php echo esc_attr($settings['table_body_bg_color']); ?>" /></label>
                         <label><?php esc_html_e('Table body text', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[table_body_text_color]" value="<?php echo esc_attr($settings['table_body_text_color']); ?>" /></label>
+                        <label><?php esc_html_e('Table border', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[table_border_color]" value="<?php echo esc_attr($settings['table_border_color']); ?>" /></label>
+                        <label><?php esc_html_e('Cell border', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[table_cell_border_color]" value="<?php echo esc_attr($settings['table_cell_border_color']); ?>" /></label>
+                        <label><?php esc_html_e('Row hover background', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[table_hover_bg_color]" value="<?php echo esc_attr($settings['table_hover_bg_color']); ?>" /></label>
+                        <label><?php esc_html_e('Selected row background', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[table_selected_bg_color]" value="<?php echo esc_attr($settings['table_selected_bg_color']); ?>" /></label>
+                        <label><?php esc_html_e('Selected row border', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[table_selected_border_color]" value="<?php echo esc_attr($settings['table_selected_border_color']); ?>" /></label>
                     </div>
                 </section>
 
@@ -126,6 +138,10 @@ $shortcode_example = isset($shortcode_example) ? $shortcode_example : '[wpqb_bun
                         <label><?php esc_html_e('Card background', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[card_bg_color]" value="<?php echo esc_attr($settings['card_bg_color']); ?>" /></label>
                         <label><?php esc_html_e('Card text', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[card_text_color]" value="<?php echo esc_attr($settings['card_text_color']); ?>" /></label>
                         <label><?php esc_html_e('Card border', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[card_border_color]" value="<?php echo esc_attr($settings['card_border_color']); ?>" /></label>
+                        <label><?php esc_html_e('Card hover border', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[card_hover_border_color]" value="<?php echo esc_attr($settings['card_hover_border_color']); ?>" /></label>
+                        <label><?php esc_html_e('Card selected border', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[card_selected_border_color]" value="<?php echo esc_attr($settings['card_selected_border_color']); ?>" /></label>
+                        <label><?php esc_html_e('Card media background', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[card_media_bg_color]" value="<?php echo esc_attr($settings['card_media_bg_color']); ?>" /></label>
+                        <label><?php esc_html_e('Card radius (px)', 'wpqb'); ?><input type="number" min="0" max="40" step="1" name="wpqb_plugin_setting[card_radius]" value="<?php echo esc_attr($settings['card_radius']); ?>" /></label>
                         <label><?php esc_html_e('Discount background', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[discount_bg_color]" value="<?php echo esc_attr($settings['discount_bg_color']); ?>" /></label>
                         <label><?php esc_html_e('Discount text', 'wpqb'); ?><input type="color" name="wpqb_plugin_setting[discount_text_color]" value="<?php echo esc_attr($settings['discount_text_color']); ?>" /></label>
                     </div>
@@ -145,7 +161,8 @@ $shortcode_example = isset($shortcode_example) ? $shortcode_example : '[wpqb_bun
                         <fieldset class="wpqb-check-card">
                             <legend><?php esc_html_e('Behavior', 'wpqb'); ?></legend>
                             <label><input type="checkbox" name="wpqb_plugin_setting[require_bundle_selection]" value="yes" <?php checked($settings['require_bundle_selection'], 'yes'); ?> /> <?php esc_html_e('Require bundle selection before add to cart', 'wpqb'); ?></label>
-                            <label><input type="checkbox" name="wpqb_plugin_setting[shortcode_enabled]" value="yes" <?php checked($settings['shortcode_enabled'], 'yes'); ?> /> <?php esc_html_e('Enable shortcode rendering', 'wpqb'); ?></label>
+                            <label><input type="checkbox" name="wpqb_plugin_setting[enable_bundle_sorting]" value="yes" <?php checked($settings['enable_bundle_sorting'], 'yes'); ?> /> <?php esc_html_e('Sort bundles by quantity', 'wpqb'); ?></label>
+                            <label><input type="checkbox" name="wpqb_plugin_setting[auto_select_by_qty_change]" value="yes" <?php checked($settings['auto_select_by_qty_change'], 'yes'); ?> /> <?php esc_html_e('Auto-select matching bundle on qty change', 'wpqb'); ?></label>
                         </fieldset>
 
                         <fieldset class="wpqb-check-card">

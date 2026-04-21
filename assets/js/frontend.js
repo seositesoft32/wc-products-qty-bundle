@@ -5,6 +5,7 @@
     'use strict';
 
     let selectedBundle = null;
+    let suppressAutoSelect = false;
     const pluginSettings = window.wpqbPluginSettings || {};
     const i18n = pluginSettings.i18n || {};
 
@@ -44,6 +45,8 @@
         showQtyAfterPerItem: isSettingEnabled(pluginSettings.showQtyAfterPerItem, true),
         showSelectedTotal: isSettingEnabled(pluginSettings.showSelectedTotal, true),
         requireBundleSelection: isSettingEnabled(pluginSettings.requireBundleSelection, false),
+        enableBundleSorting: isSettingEnabled(pluginSettings.enableBundleSorting, true),
+        autoSelectByQtyChange: isSettingEnabled(pluginSettings.autoSelectByQtyChange, true),
         selectionMode: (pluginSettings.selectionMode === 'manual') ? 'manual' : 'auto'
     };
 
@@ -100,7 +103,9 @@
 
             const $qtyInput = $('form.cart input.qty').first();
             if ($qtyInput.length) {
+                suppressAutoSelect = true;
                 $qtyInput.val(selectedBundle.qty).trigger('change');
+                suppressAutoSelect = false;
             }
         }
 
@@ -110,6 +115,10 @@
         }
 
         function sortBundleRowsByQty() {
+            if (!settingsState.enableBundleSorting) {
+                return;
+            }
+
             const $rows = $('.wpqb-bundle-option');
             if (!$rows.length) {
                 return;
@@ -132,9 +141,36 @@
             });
         }
 
+        function getSelectableBundleOptions() {
+            const $allRows = $('.wpqb-bundle-option');
+            if (!$allRows.length) {
+                return $allRows;
+            }
+
+            // Prefer visible options so auto-select targets the active UI (table or cards).
+            const $visibleRows = $allRows.filter(':visible');
+            if ($visibleRows.length) {
+                return $visibleRows;
+            }
+
+            if (settingsState.designType === 'table') {
+                const $tableRows = $('.wpqb-bundles-table-wrap:not(.wpqb-hidden) .wpqb-bundle-option, .wpqb-bundles-table .wpqb-bundle-option');
+                if ($tableRows.length) {
+                    return $tableRows;
+                }
+            }
+
+            const $cardRows = $('.wpqb-bundles-cards:not(.wpqb-hidden) .wpqb-bundle-option, .wpqb-bundles-cards .wpqb-bundle-option');
+            if ($cardRows.length) {
+                return $cardRows;
+            }
+
+            return $allRows;
+        }
+
         function selectBundleByQty(qty) {
             const currentQty = parseInt(qty, 10) || 0;
-            const $rows = $('.wpqb-bundle-option');
+            const $rows = getSelectableBundleOptions();
 
             if (currentQty <= 0 || !$rows.length) {
                 deselectBundle();
@@ -306,7 +342,9 @@
 
                 deselectBundle();
                 renderVariationBundles(variation && variation.wpqb_bundles ? variation.wpqb_bundles : []);
-                selectBundleByQty(getCurrentCartQty());
+                if (settingsState.selectionMode === 'auto' && settingsState.autoSelectByQtyChange) {
+                    selectBundleByQty(getCurrentCartQty());
+                }
             });
 
             $variationForm.on('reset_data hide_variation', function () {
@@ -343,6 +381,14 @@
             $('.wpqb-bundle-option').removeClass('selected');
             $bundle.addClass('selected');
 
+            // For table rows, also apply selected bg inline to override any inline style set by applyDynamicTableBodyStyles
+            if ($bundle.is('tr')) {
+                const selectedBg = getBundleStyleVar('--wpqb-table-selected-bg');
+                if (selectedBg) {
+                    $bundle.find('td').css('background-color', selectedBg);
+                }
+            }
+
             // Get bundle data
             selectedBundle = {
                 bundle_index: $bundle.data('bundle-index'),
@@ -373,6 +419,16 @@
          * Deselect bundle
          */
         function deselectBundle() {
+            // Restore td inline bg to body-bg for previously selected table rows
+            const bodyBg = getBundleStyleVar('--wpqb-table-body-bg');
+            $('.wpqb-bundles-table .wpqb-bundle-option.selected td').each(function () {
+                if (bodyBg) {
+                    $(this).css('background-color', bodyBg);
+                } else {
+                    $(this).css('background-color', '');
+                }
+            });
+
             $('.wpqb-bundle-option').removeClass('selected');
             selectedBundle = null;
 
@@ -484,7 +540,7 @@
 
         // Handle quantity changes to update total price display
         $(document).on('change', 'input.qty', function () {
-            if (settingsState.selectionMode === 'auto') {
+            if (!suppressAutoSelect && settingsState.autoSelectByQtyChange) {
                 selectBundleByQty(getCurrentCartQty());
             }
 
