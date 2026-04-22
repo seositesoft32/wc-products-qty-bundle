@@ -317,6 +317,40 @@ class WPQB_Plugin_Init
             return;
         }
 
+        $product = wc_get_product($post_id);
+
+        // For variable products, handle all rendered variation bundle panels here.
+        // This is the safety-net path for the main "Update" button, complementing
+        // the per-variation woocommerce_save_product_variation hook.
+        if ($product && $product->is_type('variable')) {
+            if (empty($_POST['wpqb_variation_bundle_rendered']) || !is_array($_POST['wpqb_variation_bundle_rendered'])) {
+                return;
+            }
+
+            $child_ids        = array_map('absint', $product->get_children());
+            $rendered_raw     = wp_unslash($_POST['wpqb_variation_bundle_rendered']);
+            $rendered_ids     = array_map('absint', array_keys($rendered_raw));
+            $valid_ids        = array_intersect($rendered_ids, $child_ids);
+
+            $raw_variations = isset($_POST['wpqb_variation_bundles'])
+                ? wp_unslash($_POST['wpqb_variation_bundles'])
+                : [];
+
+            foreach ($valid_ids as $variation_id) {
+                $raw_bundles = isset($raw_variations[$variation_id]) ? $raw_variations[$variation_id] : [];
+                $bundles     = $this->sanitize_bundles($raw_bundles);
+
+                if (empty($bundles)) {
+                    delete_post_meta($variation_id, '_wpqb_qty_bundles');
+                } else {
+                    update_post_meta($variation_id, '_wpqb_qty_bundles', $bundles);
+                }
+            }
+
+            return;
+        }
+
+        // Simple product.
         $bundles = isset($_POST['wpqb_bundles']) ? $this->sanitize_bundles(wp_unslash($_POST['wpqb_bundles'])) : [];
 
         if (empty($bundles)) {
@@ -336,6 +370,12 @@ class WPQB_Plugin_Init
         $bundles = $this->get_product_bundles($variation_id);
 
         echo '<div class="wpqb-variation-bundles">';
+        // Sentinel: tells the main product save that this variation panel was rendered.
+        // Also used by JS to trigger WooCommerce\'s "Save changes" dirty detection.
+        echo '<input type="hidden"
+            name="wpqb_variation_bundle_rendered[' . esc_attr($variation_id) . ']"
+            value="1"
+            class="wpqb-variation-dirty no-var-save" />';
         echo '<h4>' . esc_html__('Quantity Bundles', 'wpqb') . '</h4>';
         echo '<div class="wpqb-bundles-container" data-name-prefix="wpqb_variation_bundles[' . esc_attr($variation_id) . ']">';
 
@@ -795,15 +835,23 @@ class WPQB_Plugin_Init
             return false;
         }
 
+        $security_nonce_valid = false;
         if (!empty($_POST['security'])) {
-            return (bool) wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['security'])), 'save-variations');
+            $security_nonce_valid = (bool) wp_verify_nonce(
+                sanitize_text_field(wp_unslash($_POST['security'])),
+                'save-variations'
+            );
         }
 
+        $meta_nonce_valid = false;
         if (!empty($_POST['woocommerce_meta_nonce'])) {
-            return (bool) wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['woocommerce_meta_nonce'])), 'woocommerce_save_data');
+            $meta_nonce_valid = (bool) wp_verify_nonce(
+                sanitize_text_field(wp_unslash($_POST['woocommerce_meta_nonce'])),
+                'woocommerce_save_data'
+            );
         }
 
-        return false;
+        return ($security_nonce_valid || $meta_nonce_valid);
     }
 
     private function sanitize_bundles($raw_bundles)

@@ -34,10 +34,18 @@
             e.preventDefault();
 
             if (confirm((window.wpqbAdmin && window.wpqbAdmin.confirmRemove) ? window.wpqbAdmin.confirmRemove : 'Are you sure you want to remove this bundle?')) {
-                $(this).closest('.wpqb-bundle-item').fadeOut(300, function () {
+                const $bundleItem = $(this).closest('.wpqb-bundle-item');
+                const $variation = $bundleItem.closest('.woocommerce_variation');
+
+                $bundleItem.fadeOut(300, function () {
                     const $container = $(this).closest('.wpqb-bundles-container');
                     $(this).remove();
                     updateBundleNumbers($container);
+
+                    // Activate WooCommerce variation "Save changes" button
+                    if ($variation.length) {
+                        $variation.find('.wpqb-variation-dirty').val('1').trigger('change');
+                    }
                 });
             }
         });
@@ -267,6 +275,12 @@
         container.find('.wpqb-bundle-item').last().hide().fadeIn(300);
         updateBundleNumbers(container);
         updateBundleTotal(container.find('.wpqb-bundle-item').last());
+
+        // Activate WooCommerce variation "Save changes" button
+        const $variation = container.closest('.woocommerce_variation');
+        if ($variation.length) {
+            $variation.find('.wpqb-variation-dirty').val('1').trigger('change');
+        }
     }
 
     function parseNumber(value) {
@@ -446,14 +460,33 @@
     }
 
     /**
-     * Update bundle numbers after removal
+     * Update bundle numbers after removal/reorder, re-indexing input name attributes
      */
     function updateBundleNumbers($container) {
         const $scope = $container && $container.length ? $container : $('#wpqb-bundles-container');
+        const namePrefix = $scope.data('name-prefix') || 'wpqb_bundles';
 
         $scope.find('.wpqb-bundle-item').each(function (index) {
+            $(this).attr('data-index', index);
             $(this).find('.wpqb-bundle-header h4').text('Bundle #' + (index + 1));
+
+            // Re-index all input name attributes so indices are contiguous
+            $(this).find('[name]').each(function () {
+                const currentName = $(this).attr('name');
+                // Replace the numeric index in the name, e.g. prefix[2][qty] -> prefix[0][qty]
+                const newName = currentName.replace(
+                    new RegExp('^(' + escapeRegExp(namePrefix) + '\\[)\\d+(\\].+)$'),
+                    '$1' + index + '$2'
+                );
+                if (newName !== currentName) {
+                    $(this).attr('name', newName);
+                }
+            });
         });
+    }
+
+    function escapeRegExp(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
 })(jQuery);
