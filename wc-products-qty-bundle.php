@@ -84,14 +84,28 @@ function wpqb_plugin_load_textdomain()
 
 function wpqb_plugin_load_inc_files()
 {
-    $files = glob(WPQB_PLUGIN_PATH . 'inc/*.php');
+    $ordered_files = [
+        WPQB_PLUGIN_PATH . 'inc/class-plugin-base.php',
+        WPQB_PLUGIN_PATH . 'inc/class-plugin-admin.php',
+        WPQB_PLUGIN_PATH . 'inc/class-plugin-frontend.php',
+        WPQB_PLUGIN_PATH . 'inc/class-plugin-init.php',
+    ];
 
+    foreach ($ordered_files as $file) {
+        if (file_exists($file)) {
+            require_once $file;
+        }
+    }
+
+    $files = glob(WPQB_PLUGIN_PATH . 'inc/*.php');
     if (empty($files)) {
         return;
     }
 
     foreach ($files as $file) {
-        require_once $file;
+        if (!in_array($file, $ordered_files, true)) {
+            require_once $file;
+        }
     }
 }
 
