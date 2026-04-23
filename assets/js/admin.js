@@ -7,6 +7,8 @@
     let bundleIndex = 0;
 
     $(document).ready(function () {
+        initSettingsPage();
+
         // Initialize bundle index based on existing bundles
         bundleIndex = $('.wpqb-bundle-item').length;
 
@@ -31,11 +33,19 @@
         $(document).on('click', '.wpqb-remove-bundle', function (e) {
             e.preventDefault();
 
-            if (confirm('Are you sure you want to remove this bundle?')) {
-                $(this).closest('.wpqb-bundle-item').fadeOut(300, function () {
+            if (confirm((window.wpqbAdmin && window.wpqbAdmin.confirmRemove) ? window.wpqbAdmin.confirmRemove : 'Are you sure you want to remove this bundle?')) {
+                const $bundleItem = $(this).closest('.wpqb-bundle-item');
+                const $variation = $bundleItem.closest('.woocommerce_variation');
+
+                $bundleItem.fadeOut(300, function () {
                     const $container = $(this).closest('.wpqb-bundles-container');
                     $(this).remove();
                     updateBundleNumbers($container);
+
+                    // Activate WooCommerce variation "Save changes" button
+                    if ($variation.length) {
+                        $variation.find('.wpqb-variation-dirty').val('1').trigger('change');
+                    }
                 });
             }
         });
@@ -52,9 +62,9 @@
 
             // Create media frame
             const frame = wp.media({
-                title: 'Select Bundle Image',
+                title: (window.wpqbAdmin && window.wpqbAdmin.mediaTitle) ? window.wpqbAdmin.mediaTitle : 'Select Bundle Image',
                 button: {
-                    text: 'Use this image'
+                    text: (window.wpqbAdmin && window.wpqbAdmin.mediaButton) ? window.wpqbAdmin.mediaButton : 'Use this image'
                 },
                 multiple: false,
                 library: {
@@ -125,6 +135,108 @@
         );
     });
 
+    function initSettingsPage() {
+        const $settingsPage = $('.wpqb-settings-page');
+        if (!$settingsPage.length) {
+            return;
+        }
+
+        const $tabs = $settingsPage.find('.wpqb-tab');
+        const $panels = $settingsPage.find('.wpqb-tab-panel');
+        const $form = $('#wpqb-settings-form');
+        const $saveButton = $('#wpqb-save-settings');
+        const $notice = $('#wpqb-settings-notice');
+        const i18nSaveButton = (window.wpqbAdmin && window.wpqbAdmin.saveButton) ? window.wpqbAdmin.saveButton : 'Save Settings';
+        const i18nSavingButton = (window.wpqbAdmin && window.wpqbAdmin.savingButton) ? window.wpqbAdmin.savingButton : 'Saving...';
+        const i18nSavedMessage = (window.wpqbAdmin && window.wpqbAdmin.savedMessage) ? window.wpqbAdmin.savedMessage : 'Settings saved successfully.';
+        const i18nErrorMessage = (window.wpqbAdmin && window.wpqbAdmin.errorMessage) ? window.wpqbAdmin.errorMessage : 'Unable to save settings. Please try again.';
+
+        function setNotice(message, status) {
+            $notice.removeClass('is-success is-error').addClass('is-visible');
+            $notice.addClass('success' === status ? 'is-success' : 'is-error').text(message);
+        }
+
+        function clearNotice() {
+            $notice.removeClass('is-visible is-success is-error').text('');
+        }
+
+        function switchTab(target) {
+            $tabs.removeClass('is-active');
+            $tabs.filter('[data-tab="' + target + '"]').addClass('is-active');
+
+            $panels.removeClass('is-active');
+            $panels.filter('[data-panel="' + target + '"]').addClass('is-active');
+        }
+
+        function syncDesignPanels() {
+            const design = $('#wpqb_design_type').val();
+            const isCards = 'cards' === design;
+            const $tableTab = $tabs.filter('[data-tab="table-style"]');
+            const $cardsTab = $tabs.filter('[data-tab="cards-style"]');
+
+            $tableTab.toggle(!isCards);
+            $cardsTab.toggle(isCards);
+
+            $tableTab.toggleClass('is-muted', isCards);
+            $cardsTab.toggleClass('is-muted', !isCards);
+
+            const $activeTab = $tabs.filter('.is-active');
+            const activeId = $activeTab.data('tab');
+
+            if (isCards && 'table-style' === activeId) {
+                switchTab('cards-style');
+            }
+
+            if (!isCards && 'cards-style' === activeId) {
+                switchTab('table-style');
+            }
+        }
+
+        $tabs.on('click', function () {
+            const target = $(this).data('tab');
+            switchTab(target);
+        });
+
+        $('#wpqb_design_type').on('change', syncDesignPanels);
+        syncDesignPanels();
+
+        function saveSettingsAjax() {
+            clearNotice();
+            $saveButton.prop('disabled', true).text(i18nSavingButton);
+
+            $.ajax({
+                url: (window.wpqbAdmin && window.wpqbAdmin.ajaxUrl) ? window.wpqbAdmin.ajaxUrl : ajaxurl,
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    action: 'wpqb_save_settings',
+                    nonce: (window.wpqbAdmin && window.wpqbAdmin.saveNonce) ? window.wpqbAdmin.saveNonce : '',
+                    form_data: $form.serialize()
+                }
+            }).done(function (response) {
+                if (response && response.success) {
+                    setNotice((response.data && response.data.message) ? response.data.message : i18nSavedMessage, 'success');
+                } else {
+                    setNotice((response && response.data && response.data.message) ? response.data.message : i18nErrorMessage, 'error');
+                }
+            }).fail(function () {
+                setNotice(i18nErrorMessage, 'error');
+            }).always(function () {
+                $saveButton.prop('disabled', false).text(i18nSaveButton);
+            });
+        }
+
+        $saveButton.on('click', function (e) {
+            e.preventDefault();
+            saveSettingsAjax();
+        });
+
+        $form.on('submit', function (e) {
+            e.preventDefault();
+            saveSettingsAjax();
+        });
+    }
+
     /**
      * Add a new bundle to the container
      */
@@ -163,6 +275,12 @@
         container.find('.wpqb-bundle-item').last().hide().fadeIn(300);
         updateBundleNumbers(container);
         updateBundleTotal(container.find('.wpqb-bundle-item').last());
+
+        // Activate WooCommerce variation "Save changes" button
+        const $variation = container.closest('.woocommerce_variation');
+        if ($variation.length) {
+            $variation.find('.wpqb-variation-dirty').val('1').trigger('change');
+        }
     }
 
     function parseNumber(value) {
@@ -327,31 +445,48 @@
                                placeholder="0.00"
                                class="short wc_input_price" />
                     </p>
+                    <p class="wpqb-form-field wpqb-image-field">
+                        <label>Bundle Image</label>
+                        <span class="wpqb-image-preview"></span>
+                        <input type="hidden"
+                               name="${namePrefix}[${index}][image_id]"
+                               class="wpqb-image-id"
+                               value="" />
+                        <button type="button" class="button wpqb-upload-image">Upload Image</button>
+                        <button type="button" class="button wpqb-remove-image" style="display:none;">Remove Image</button>
+                    </p>
                 </div>
             </div>`;
-
-
-        // <p class="wpqb-form-field wpqb-image-field">
-        //     <label>Bundle Image</label>
-        //     <div class="wpqb-image-preview"></div>
-        //     <input type="hidden" 
-        //            name="${namePrefix}[${index}][image_id]" 
-        //            class="wpqb-image-id"
-        //            value="" />
-        //     <button type="button" class="button wpqb-upload-image">Upload Image</button>
-        //     <button type="button" class="button wpqb-remove-image" style="display:none;">Remove Image</button>
-        // </p>
     }
 
     /**
-     * Update bundle numbers after removal
+     * Update bundle numbers after removal/reorder, re-indexing input name attributes
      */
     function updateBundleNumbers($container) {
         const $scope = $container && $container.length ? $container : $('#wpqb-bundles-container');
+        const namePrefix = $scope.data('name-prefix') || 'wpqb_bundles';
 
         $scope.find('.wpqb-bundle-item').each(function (index) {
+            $(this).attr('data-index', index);
             $(this).find('.wpqb-bundle-header h4').text('Bundle #' + (index + 1));
+
+            // Re-index all input name attributes so indices are contiguous
+            $(this).find('[name]').each(function () {
+                const currentName = $(this).attr('name');
+                // Replace the numeric index in the name, e.g. prefix[2][qty] -> prefix[0][qty]
+                const newName = currentName.replace(
+                    new RegExp('^(' + escapeRegExp(namePrefix) + '\\[)\\d+(\\].+)$'),
+                    '$1' + index + '$2'
+                );
+                if (newName !== currentName) {
+                    $(this).attr('name', newName);
+                }
+            });
         });
+    }
+
+    function escapeRegExp(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
 })(jQuery);
