@@ -327,10 +327,10 @@ class WPQB_Plugin_Init
                 return;
             }
 
-            $child_ids        = array_map('absint', $product->get_children());
-            $rendered_raw     = wp_unslash($_POST['wpqb_variation_bundle_rendered']);
-            $rendered_ids     = array_map('absint', array_keys($rendered_raw));
-            $valid_ids        = array_intersect($rendered_ids, $child_ids);
+            $child_ids = array_map('absint', $product->get_children());
+            $rendered_raw = wp_unslash($_POST['wpqb_variation_bundle_rendered']);
+            $rendered_ids = array_map('absint', array_keys($rendered_raw));
+            $valid_ids = array_intersect($rendered_ids, $child_ids);
 
             $raw_variations = isset($_POST['wpqb_variation_bundles'])
                 ? wp_unslash($_POST['wpqb_variation_bundles'])
@@ -338,7 +338,7 @@ class WPQB_Plugin_Init
 
             foreach ($valid_ids as $variation_id) {
                 $raw_bundles = isset($raw_variations[$variation_id]) ? $raw_variations[$variation_id] : [];
-                $bundles     = $this->sanitize_bundles($raw_bundles);
+                $bundles = $this->sanitize_bundles($raw_bundles);
 
                 if (empty($bundles)) {
                     delete_post_meta($variation_id, '_wpqb_qty_bundles');
@@ -465,21 +465,28 @@ class WPQB_Plugin_Init
         ?>
         <div class="wpqb-bundles-frontend wpqb-design-<?php echo esc_attr($this->settings['design_type']); ?><?php echo $is_primary_product_form ? '' : ' wpqb-bundles-shortcode'; ?>"
             style="<?php echo esc_attr($inline_style); ?>">
-            <h3 class="wpqb-bundles-title"><?php echo esc_html(!empty($this->settings['table_title']) ? $this->settings['table_title'] : __('Quantity Bundles', 'wpqb')); ?></h3>
+            <h3 class="wpqb-bundles-title">
+                <?php echo esc_html(!empty($this->settings['table_title']) ? $this->settings['table_title'] : __('Quantity Bundles', 'wpqb')); ?>
+            </h3>
             <input type="hidden" name="wpqb_selected_bundle" id="wpqb-selected-bundle" value="" />
             <?php if ($is_variable): ?>
-                <p class="wpqb-bundles-placeholder"><?php echo esc_html(!empty($this->settings['variable_placeholder_text']) ? $this->settings['variable_placeholder_text'] : __('Select product options to view bundles.', 'wpqb')); ?></p>
+                <p class="wpqb-bundles-placeholder">
+                    <?php echo esc_html(!empty($this->settings['variable_placeholder_text']) ? $this->settings['variable_placeholder_text'] : __('Select product options to view bundles.', 'wpqb')); ?>
+                </p>
             <?php endif; ?>
             <div class="wpqb-bundles-list">
                 <div class="wpqb-bundles-table-wrap<?php echo $is_table ? '' : ' wpqb-hidden'; ?>">
                     <table class="wpqb-bundles-table">
                         <thead>
                             <tr>
-                                <th><?php echo esc_html(!empty($this->settings['table_heading_bundle']) ? $this->settings['table_heading_bundle'] : __('Bundle', 'wpqb')); ?></th>
+                                <th><?php echo esc_html(!empty($this->settings['table_heading_bundle']) ? $this->settings['table_heading_bundle'] : __('Bundle', 'wpqb')); ?>
+                                </th>
                                 <?php if ('yes' === $this->settings['show_per_item_price']): ?>
-                                    <th><?php echo esc_html(!empty($this->settings['table_heading_per_item']) ? $this->settings['table_heading_per_item'] : __('Per Item', 'wpqb')); ?></th>
+                                    <th><?php echo esc_html(!empty($this->settings['table_heading_per_item']) ? $this->settings['table_heading_per_item'] : __('Per Item', 'wpqb')); ?>
+                                    </th>
                                 <?php endif; ?>
-                                <th><?php echo esc_html(!empty($this->settings['table_heading_total_price']) ? $this->settings['table_heading_total_price'] : __('Total Price', 'wpqb')); ?></th>
+                                <th><?php echo esc_html(!empty($this->settings['table_heading_total_price']) ? $this->settings['table_heading_total_price'] : __('Total Price', 'wpqb')); ?>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -672,7 +679,7 @@ class WPQB_Plugin_Init
         return $variation_data;
     }
 
-    public function validate_bundle_selection($passed, $product_id, $quantity, $variation_id, $variations)
+    public function validate_bundle_selection($passed, $product_id, $quantity, $variation_id = 0, $variations = [])
     {
         unset($variations);
 
