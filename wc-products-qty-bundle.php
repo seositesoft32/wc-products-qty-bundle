@@ -18,16 +18,6 @@
  * WC tested up to:   10.0
  *
  * @package WC_Products_Qty_Bundle
- *
- * This plugin is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * any later version.
- *
- * This plugin is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -56,8 +46,7 @@ define( 'WPQB_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 /** Absolute path to the plugin templates directory (with trailing slash). */
 define( 'WPQB_PLUGIN_TEMPLATE_PATH', WPQB_PLUGIN_PATH . 'templates/' );
 
-// Legacy constant aliases — kept for backward compatibility with any external
-// code that may reference the older naming convention.
+// Legacy constant aliases for backward compatibility.
 if ( ! defined( 'wpqb_plugin_plugin_PATH' ) ) {
     define( 'wpqb_plugin_plugin_PATH', WPQB_PLUGIN_PATH );
 }
@@ -74,8 +63,7 @@ if ( ! defined( 'wpqb_plugin_template_path' ) ) {
     define( 'wpqb_plugin_template_path', WPQB_PLUGIN_TEMPLATE_PATH );
 }
 
-// Build and store parsed plugin header data as a constant for use across the
-// codebase (e.g. slug resolution, version access).
+// Build parsed plugin header data used across the plugin.
 if ( ! defined( 'wpqb_plugin_info' ) ) {
     $plugin_data          = get_plugin_data( __FILE__ );
     $plugin_data['v']     = WPQB_PLUGIN_VERSION;
@@ -89,12 +77,7 @@ if ( ! defined( 'wpqb_plugin_info' ) ) {
 require_once WPQB_PLUGIN_PATH . 'helper.php';
 
 /**
- * Run on plugin activation.
- *
- * Ensures the plugin settings option exists in the database by writing the
- * current (or default) settings on first activation.
- *
- * @since 1.0.0
+ * Plugin activation callback.
  *
  * @return void
  */
@@ -103,14 +86,7 @@ function wpqb_plugin_activate() {
 }
 
 /**
- * Declare compatibility with WooCommerce feature flags.
- *
- * Signals to WooCommerce that this plugin is compatible with High-Performance
- * Order Storage (HPOS / custom_order_tables) and the Cart & Checkout Blocks
- * (cart_checkout_blocks). Called on the `before_woocommerce_init` hook so the
- * declaration is registered before WooCommerce reads it.
- *
- * @since 1.0.0
+ * Declare WooCommerce feature compatibility.
  *
  * @return void
  */
@@ -124,12 +100,7 @@ function wpqb_plugin_declare_wc_compatibility() {
 }
 
 /**
- * Load the plugin text domain for translation.
- *
- * Called on `plugins_loaded` via `wpqb_plugin_bootstrap()`. Translation files
- * should be placed in `/languages/wpqb-{locale}.mo`.
- *
- * @since 1.0.0
+ * Load plugin text domain.
  *
  * @return void
  */
@@ -138,13 +109,7 @@ function wpqb_plugin_load_textdomain() {
 }
 
 /**
- * Require the plugin's class files in dependency order.
- *
- * Loads the four core classes in the correct order (Base → Admin → Frontend →
- * Init) so that parent classes exist before their children. Any additional
- * files found in `inc/` are loaded afterwards.
- *
- * @since 1.0.0
+ * Load plugin class files.
  *
  * @return void
  */
@@ -162,7 +127,7 @@ function wpqb_plugin_load_inc_files() {
         }
     }
 
-    // Load any additional files added to inc/ that are not in the ordered list.
+    // Load any additional files in inc/.
     $files = glob( WPQB_PLUGIN_PATH . 'inc/*.php' );
     if ( empty( $files ) ) {
         return;
@@ -178,12 +143,6 @@ function wpqb_plugin_load_inc_files() {
 /**
  * Bootstrap the plugin.
  *
- * Loads the text domain and, if all required plugins are active, loads the
- * plugin's class files. Called on the `plugins_loaded` hook to ensure
- * WooCommerce is fully available.
- *
- * @since 1.0.0
- *
  * @return void
  */
 function wpqb_plugin_bootstrap() {
@@ -196,8 +155,8 @@ function wpqb_plugin_bootstrap() {
     wpqb_plugin_load_inc_files();
 }
 
-register_activation_hook(WPQB_PLUGIN_FILE, 'wpqb_plugin_activate');
+register_activation_hook( WPQB_PLUGIN_FILE, 'wpqb_plugin_activate' );
 
-add_action('before_woocommerce_init', 'wpqb_plugin_declare_wc_compatibility');
-add_action('plugins_loaded', 'wpqb_plugin_bootstrap');
-add_action('admin_notices', 'wpqb_plugin_plugin_admin_notce');
+add_action( 'before_woocommerce_init', 'wpqb_plugin_declare_wc_compatibility' );
+add_action( 'plugins_loaded', 'wpqb_plugin_bootstrap' );
+add_action( 'admin_notices', 'wpqb_plugin_plugin_admin_notce' );

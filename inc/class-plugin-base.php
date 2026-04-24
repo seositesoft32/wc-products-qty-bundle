@@ -2,14 +2,8 @@
 /**
  * Base plugin class.
  *
- * Provides shared properties and methods inherited by both the admin and
- * frontend classes. Centralises bundle data retrieval, sanitization, pricing
- * calculations, and product-type guards so they are not duplicated across
- * subclasses.
- *
- * @package   WC_Products_Qty_Bundle
+ * @package WC_Products_Qty_Bundle
  * @subpackage Inc
- * @since      1.0.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -18,33 +12,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Class WPQB_Plugin_Base
- *
- * Abstract-style base class extended by WPQB_Plugin_Admin and
- * WPQB_Plugin_Frontend. Contains no hook registrations of its own.
- *
- * @since 1.0.0
  */
 class WPQB_Plugin_Base {
 
     /**
-     * Cached plugin settings.
-     *
-     * Populated in the constructor from `wpqb_plugin_settings()` and refreshed
-     * after any settings save. Subclasses read from this property directly.
-     *
-     * @since 1.0.0
-     *
      * @var array<string, mixed>
      */
     protected $settings = [];
 
     /**
      * Constructor.
-     *
-     * Loads the current plugin settings into `$this->settings` so every
-     * subclass has access to the full configuration on instantiation.
-     *
-     * @since 1.0.0
      */
     public function __construct() {
         $this->settings = wpqb_plugin_settings();
@@ -260,7 +237,7 @@ class WPQB_Plugin_Base {
 
         $regular_price = isset( $bundle['regular_price'] ) ? (float) $bundle['regular_price'] : 0.0;
         if ( $regular_price <= 0 ) {
-            // Fall back to the product's own regular price when none is set on the bundle.
+            // Fall back to product regular price.
             $regular_price = $this->get_product_regular_price_value( $product );
         }
 
@@ -307,8 +284,7 @@ class WPQB_Plugin_Base {
 
         foreach ( $bundles as $index => $bundle ) {
             $tier_qty = isset( $bundle['qty'] ) ? absint( $bundle['qty'] ) : 0;
-            // Accept this tier only if its threshold is met and it is a better
-            // (higher) match than any previously found tier.
+            // Keep the highest eligible tier.
             if ( $tier_qty > 0 && $quantity >= $tier_qty && $tier_qty >= $best_tier_qty ) {
                 $best_tier_qty = $tier_qty;
                 $match = [
@@ -369,7 +345,7 @@ class WPQB_Plugin_Base {
             }
         }
 
-        // Card border-radius is a numeric value; clamp it to the valid 0–40 px range.
+        // Clamp card border radius between 0 and 40.
         $parts[] = '--wpqb-card-radius:' . max( 0, min( 40, absint( $this->settings['card_radius'] ) ) ) . 'px';
 
         return implode( ';', $parts );

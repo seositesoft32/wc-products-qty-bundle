@@ -2,29 +2,14 @@
 /**
  * Plugin helper functions.
  *
- * Global utility functions used across the plugin for settings retrieval,
- * sanitization, template loading, dependency checking, and logging. This file
- * is loaded by the main plugin file before any class files so every function
- * is available throughout the plugin's bootstrap sequence.
- *
- * @package   WC_Products_Qty_Bundle
- * @since     1.0.0
+ * @package WC_Products_Qty_Bundle
  */
 
 /**
- * Check whether one or all required plugins are active.
+ * Check required plugin status.
  *
- * When `$plugin_name` is supplied only that specific plugin is checked.
- * When omitted, every plugin in the required list must be active for the
- * function to return true.
- *
- * @since 1.0.0
- *
- * @param string $plugin_name Optional. A key from the internal `$plugins` map
- *                            (e.g. `'woocommerce'`) or a plugin basename
- *                            (e.g. `'woocommerce/woocommerce.php'`).
- *                            Pass an empty string (default) to check all.
- * @return bool True if the requested plugin(s) are active, false otherwise.
+ * @param string $plugin_name Optional plugin key or basename.
+ * @return bool
  */
 function wpqb_plugin_has_active_required_plugins( $plugin_name = '' ) {
     $plugins = [
@@ -47,15 +32,9 @@ function wpqb_plugin_has_active_required_plugins( $plugin_name = '' ) {
 }
 
 /**
- * Return the plugin's default settings array.
+ * Get default plugin settings.
  *
- * Provides the canonical default value for every plugin option. Used as the
- * fallback in `wpqb_plugin_settings()` and as the base in
- * `wpqb_plugin_sanitize_settings()` to guarantee every key is always present.
- *
- * @since 1.0.0
- *
- * @return array<string, mixed> Associative array of setting keys and their defaults.
+ * @return array<string, mixed>
  */
 function wpqb_plugin_get_default_settings() {
     return [
@@ -106,14 +85,9 @@ function wpqb_plugin_get_default_settings() {
 }
 
 /**
- * Return the allowed display hook positions.
+ * Get available display hook positions.
  *
- * Maps WooCommerce action hook names (and the special `shortcode_only` value)
- * to human-readable labels used in the settings page select field.
- *
- * @since 1.0.0
- *
- * @return array<string, string> Associative array of hook name => label.
+ * @return array<string, string>
  */
 function wpqb_plugin_get_display_positions() {
     return [
@@ -125,26 +99,10 @@ function wpqb_plugin_get_display_positions() {
 }
 
 /**
- * Sanitize and validate the raw plugin settings array.
+ * Sanitize plugin settings.
  *
- * Merges the supplied `$settings` with plugin defaults, then sanitizes every
- * value to its expected type and range. Guarantees that the persisted option
- * is always a fully-populated, safe array regardless of what was submitted.
- *
- * Sanitization rules:
- *  - Text fields: `sanitize_text_field()`.
- *  - Boolean-style yes/no flags: must be exactly `'yes'`, otherwise `'no'`.
- *  - Color fields: validated hex color with fallback to the default value.
- *  - `card_radius`: integer clamped to 0–40.
- *  - `design_type`: only `'cards'` or `'table'`.
- *  - `selection_mode`: only `'manual'` or `'auto'`.
- *  - `display_position`: must be a key in `wpqb_plugin_get_display_positions()`.
- *
- * @since 1.0.0
- *
- * @param array<string, mixed> $settings Raw (unsanitized) settings array, e.g.
- *                                       from a form submission or the database.
- * @return array<string, mixed> Fully sanitized settings array.
+ * @param array<string, mixed> $settings Raw settings.
+ * @return array<string, mixed>
  */
 function wpqb_plugin_sanitize_settings( $settings ) {
     $defaults   = wpqb_plugin_get_default_settings();
@@ -152,14 +110,14 @@ function wpqb_plugin_sanitize_settings( $settings ) {
     $settings   = is_array( $settings ) ? $settings : [];
     $positions  = wpqb_plugin_get_display_positions();
 
-    // -- Text fields.
+    // Text fields.
     $sanitized['table_title']              = isset( $settings['table_title'] ) ? sanitize_text_field( wp_unslash( $settings['table_title'] ) ) : $defaults['table_title'];
     $sanitized['variable_placeholder_text'] = isset( $settings['variable_placeholder_text'] ) ? sanitize_text_field( wp_unslash( $settings['variable_placeholder_text'] ) ) : $defaults['variable_placeholder_text'];
     $sanitized['table_heading_bundle']     = isset( $settings['table_heading_bundle'] ) ? sanitize_text_field( wp_unslash( $settings['table_heading_bundle'] ) ) : $defaults['table_heading_bundle'];
     $sanitized['table_heading_per_item']   = isset( $settings['table_heading_per_item'] ) ? sanitize_text_field( wp_unslash( $settings['table_heading_per_item'] ) ) : $defaults['table_heading_per_item'];
     $sanitized['table_heading_total_price'] = isset( $settings['table_heading_total_price'] ) ? sanitize_text_field( wp_unslash( $settings['table_heading_total_price'] ) ) : $defaults['table_heading_total_price'];
 
-    // -- Enumerated string fields.
+    // Enumerated string fields.
     $sanitized['design_type']     = ( isset( $settings['design_type'] ) && 'cards' === $settings['design_type'] ) ? 'cards' : 'table';
     $sanitized['selection_mode']  = ( isset( $settings['selection_mode'] ) && 'manual' === $settings['selection_mode'] ) ? 'manual' : 'auto';
 
@@ -167,35 +125,28 @@ function wpqb_plugin_sanitize_settings( $settings ) {
         ? $settings['display_position']
         : $defaults['display_position'];
 
-    // -- Yes/no boolean fields.
+    // Yes/no fields.
     foreach ( [ 'enable_simple_products', 'enable_variable_products', 'show_savings', 'show_discount_after_title', 'show_selected_total', 'show_per_item_price', 'show_regular_price_when_sale', 'show_qty_after_per_item', 'require_bundle_selection', 'enable_bundle_sorting', 'auto_select_by_qty_change', 'cleanup_on_uninstall' ] as $key ) {
         $sanitized[ $key ] = ( ! empty( $settings[ $key ] ) && 'yes' === $settings[ $key ] ) ? 'yes' : 'no';
     }
 
-    // -- Hex color fields.
+    // Color fields.
     foreach ( [ 'table_title_bg_color', 'table_title_text_color', 'table_head_bg_color', 'table_head_text_color', 'table_body_bg_color', 'table_body_text_color', 'table_border_color', 'table_cell_border_color', 'table_hover_bg_color', 'table_selected_bg_color', 'table_selected_border_color', 'card_bg_color', 'card_text_color', 'card_border_color', 'card_hover_border_color', 'card_selected_border_color', 'card_media_bg_color', 'discount_bg_color', 'discount_text_color', 'regular_price_color', 'sale_price_color', 'strikethrough_price_color' ] as $color_key ) {
         $sanitized[ $color_key ] = wpqb_plugin_sanitize_hex_color( isset( $settings[ $color_key ] ) ? $settings[ $color_key ] : '', $defaults[ $color_key ] );
     }
 
-    // -- Numeric fields.
+    // Numeric fields.
     $sanitized['card_radius'] = isset( $settings['card_radius'] ) ? max( 0, min( 40, absint( $settings['card_radius'] ) ) ) : absint( $defaults['card_radius'] );
 
     return $sanitized;
 }
 
 /**
- * Sanitize a hex color value, falling back to a default.
+ * Sanitize a hex color with fallback.
  *
- * Wraps WordPress's `sanitize_hex_color()` to provide an explicit fallback
- * rather than returning an empty string on failure. Accepts both 3-digit and
- * 6-digit hex colors.
- *
- * @since 1.0.0
- *
- * @param string $value    The raw hex color string to sanitize (e.g. `'#abc'`,
- *                          `'#aabbcc'`).
- * @param string $fallback The hex color to return when `$value` is invalid.
- * @return string A valid hex color string.
+ * @param string $value Raw color.
+ * @param string $fallback Fallback color.
+ * @return string
  */
 function wpqb_plugin_sanitize_hex_color( $value, $fallback ) {
     $value = sanitize_hex_color( $value );
@@ -208,12 +159,7 @@ function wpqb_plugin_sanitize_hex_color( $value, $fallback ) {
 }
 
 /**
- * Output an admin notice when WooCommerce is not active.
- *
- * Hooked into `admin_notices`. Silently returns when WooCommerce is already
- * active so no notice is shown during normal operation.
- *
- * @since 1.0.0
+ * Show admin notice when WooCommerce is missing.
  *
  * @return void
  */
@@ -234,24 +180,12 @@ function wpqb_plugin_plugin_admin_notce() {
 }
 
 /**
- * Locate and load a plugin template file.
+ * Load a plugin template with optional args.
  *
- * Searches the active theme directory first (allowing theme overrides), then
- * falls back to the plugin's own `templates/` directory. Variables passed via
- * `$args` are extracted into the template scope.
- *
- * Theme override path: `{theme}/wc-products-qty-bundle/{template_name}.php`
- * Plugin default path: `{plugin}/templates/{template_name}.php`
- *
- * @since 1.0.0
- *
- * @param string $template_name  Template file name without or with `.php` extension.
- * @param array  $args           Optional. Associative array of variables to
- *                               extract into the template scope. Default empty array.
- * @param string $template_path  Optional. Sub-path appended to the theme directory
- *                               when searching for overrides. Defaults to the plugin slug.
- * @param string $default_path   Optional. Absolute path to the fallback template directory.
- *                               Defaults to `WPQB_PLUGIN_TEMPLATE_PATH`.
+ * @param string $template_name Template name.
+ * @param array  $args Template variables.
+ * @param string $template_path Theme override sub-path.
+ * @param string $default_path Fallback template path.
  * @return void
  */
 function wpqb_plugin_get_template( $template_name, $args = [], $template_path = '', $default_path = '' ) {
@@ -267,10 +201,10 @@ function wpqb_plugin_get_template( $template_name, $args = [], $template_path = 
         $default_path = wpqb_plugin_template_path;
     }
 
-    // Normalise: ensure the template name ends with .php.
+    // Ensure template extension.
     $template_name = ( false !== strpos( $template_name, '.php' ) ) ? $template_name : $template_name . '.php';
 
-    // Check for a theme override before falling back to the plugin default.
+    // Check theme override first.
     $template = locate_template( [ $template_path . $template_name ] );
 
     if ( ! $template ) {
@@ -283,19 +217,10 @@ function wpqb_plugin_get_template( $template_name, $args = [], $template_path = 
 }
 
 /**
- * Get or update the plugin settings option.
+ * Get or update plugin settings.
  *
- * Acts as both a getter and a setter:
- *  - When `$data` is `null` (default), retrieves the current settings from the
- *    database, merged with plugin defaults so every key is always present.
- *  - When `$data` is an array, sanitizes and persists it first, then returns
- *    the freshly merged value.
- *
- * @since 1.0.0
- *
- * @param array|null $data Optional. Raw settings to sanitize and save.
- *                         Pass `null` to retrieve without modifying. Default null.
- * @return array<string, mixed> The current plugin settings.
+ * @param array|null $data Optional settings to save.
+ * @return array<string, mixed>
  */
 function wpqb_plugin_settings( $data = null ) {
     if ( null !== $data ) {
@@ -309,18 +234,10 @@ function wpqb_plugin_settings( $data = null ) {
 }
 
 /**
- * Append a timestamped line to a plugin-specific log file.
+ * Write a message to plugin log file.
  *
- * Writes to `{ABSPATH}/wpqb-plugin-{$log}.log`. Intended for development
- * debugging and should not be called in production code paths without a
- * conditional guard.
- *
- * @since 1.0.0
- *
- * @param mixed  $data The data to log. Non-string values are cast to string;
- *                     HTML tags are stripped via `wp_strip_all_tags()`.
- * @param string $log  Optional. Log file identifier used in the filename.
- *                     Sanitized with `sanitize_key()`. Default `'reports'`.
+ * @param mixed  $data Data to log.
+ * @param string $log  Log file key.
  * @return void
  */
 function wpqb_plugin_logs( $data, $log = 'reports' ) {
