@@ -4,7 +4,7 @@
  * Plugin Name:       WC Products Qty Bundle
  * Plugin URI:        https://myspecialtyflooring.com/
  * Description:       Add WooCommerce quantity bundle pricing with selectable bundle tiers for simple and variable products.
- * Version:           2.3.4
+ * Version:           2.3.5
  * Author:            SeoSiteSoft
  * Author URI:        https://myspecialtyflooring.com/
  * Requires Plugins:  woocommerce
@@ -27,7 +27,7 @@ if (!function_exists('is_plugin_active') || !function_exists('get_plugin_data'))
     include_once ABSPATH . 'wp-admin/includes/plugin.php';
 }
 
-define('WPQB_PLUGIN_VERSION', '2.3.4');
+define('WPQB_PLUGIN_VERSION', '2.3.5');
 define('WPQB_PLUGIN_FILE', __FILE__);
 define('WPQB_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WPQB_PLUGIN_URL', plugin_dir_url(__FILE__));

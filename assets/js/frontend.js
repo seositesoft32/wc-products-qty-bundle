@@ -333,6 +333,24 @@
             }
         }
 
+        function resetTableRowInlineBackground($rows) {
+            const bodyBg = getBundleStyleVar('--wpqb-table-body-bg');
+            const $targetRows = $rows && $rows.length ? $rows : $('.wpqb-bundles-table .wpqb-bundle-option');
+
+            $targetRows.filter('tr').find('td').each(function () {
+                $(this).css('background-color', bodyBg || '');
+            });
+        }
+
+        function applySelectedTableRowInlineBackground($row) {
+            if (!$row || !$row.length || !$row.is('tr')) {
+                return;
+            }
+
+            const selectedBg = getBundleStyleVar('--wpqb-table-selected-bg');
+            $row.find('td').css('background-color', selectedBg || '');
+        }
+
         if (isVariableProduct) {
             $variationForm.on('found_variation', function (event, variation) {
                 selectedVariationId = variation && variation.variation_id ? parseInt(variation.variation_id, 10) : 0;
@@ -378,16 +396,12 @@
          */
         function selectBundle($bundle, setQtyInput) {
             // Remove previous selection
+            resetTableRowInlineBackground($('.wpqb-bundles-table .wpqb-bundle-option'));
             $('.wpqb-bundle-option').removeClass('selected');
             $bundle.addClass('selected');
 
             // For table rows, also apply selected bg inline to override any inline style set by applyDynamicTableBodyStyles
-            if ($bundle.is('tr')) {
-                const selectedBg = getBundleStyleVar('--wpqb-table-selected-bg');
-                if (selectedBg) {
-                    $bundle.find('td').css('background-color', selectedBg);
-                }
-            }
+            applySelectedTableRowInlineBackground($bundle);
 
             // Get bundle data
             selectedBundle = {
@@ -419,16 +433,7 @@
          * Deselect bundle
          */
         function deselectBundle() {
-            // Restore td inline bg to body-bg for previously selected table rows
-            const bodyBg = getBundleStyleVar('--wpqb-table-body-bg');
-            $('.wpqb-bundles-table .wpqb-bundle-option.selected td').each(function () {
-                if (bodyBg) {
-                    $(this).css('background-color', bodyBg);
-                } else {
-                    $(this).css('background-color', '');
-                }
-            });
-
+            resetTableRowInlineBackground($('.wpqb-bundles-table .wpqb-bundle-option.selected'));
             $('.wpqb-bundle-option').removeClass('selected');
             selectedBundle = null;
 
