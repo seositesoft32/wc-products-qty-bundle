@@ -71,7 +71,15 @@ class WPQB_Plugin_Base {
             ];
         }
 
-        return array_values( $bundles );
+        $bundles = array_values( $bundles );
+
+        /*
+         * Filters sanitized bundle rows before they are saved or consumed.
+         *
+         * Since: 2.3.0
+         * Arguments: $bundles, $raw_bundles, $this
+         */
+        return apply_filters( 'wpqb_sanitized_bundles', $bundles, $raw_bundles, $this );
     }
 
     /**
@@ -112,7 +120,15 @@ class WPQB_Plugin_Base {
     protected function get_product_bundles( $product_id ) {
         $bundles = get_post_meta( $product_id, '_wpqb_qty_bundles', true );
 
-        return is_array( $bundles ) ? $this->sanitize_bundles( $bundles ) : [];
+        $bundles = is_array( $bundles ) ? $this->sanitize_bundles( $bundles ) : [];
+
+        /*
+         * Filters product or variation bundle rows after retrieval.
+         *
+         * Since: 2.3.0
+         * Arguments: $bundles, $product_id, $this
+         */
+        return apply_filters( 'wpqb_product_bundles', $bundles, $product_id, $this );
     }
 
     /**
@@ -168,11 +184,21 @@ class WPQB_Plugin_Base {
      * @return bool True if the product type is enabled in plugin settings.
      */
     protected function is_product_type_enabled( $product ) {
+        $enabled = false;
+
         if ( $product->is_type( 'variable' ) ) {
-            return 'yes' === $this->settings['enable_variable_products'];
+            $enabled = 'yes' === $this->settings['enable_variable_products'];
+        } else {
+            $enabled = 'yes' === $this->settings['enable_simple_products'];
         }
 
-        return 'yes' === $this->settings['enable_simple_products'];
+        /*
+         * Filters whether the plugin is enabled for a given product.
+         *
+         * Since: 2.3.0
+         * Arguments: $enabled, $product, $this
+         */
+        return (bool) apply_filters( 'wpqb_is_product_type_enabled', $enabled, $product, $this );
     }
 
     /**
@@ -200,7 +226,15 @@ class WPQB_Plugin_Base {
             }
         );
 
-        return array_values( $bundles );
+        $bundles = array_values( $bundles );
+
+        /*
+         * Filters bundle rows after quantity sorting has been applied.
+         *
+         * Since: 2.3.0
+         * Arguments: $bundles, $this
+         */
+        return apply_filters( 'wpqb_sorted_bundles', $bundles, $this );
     }
 
     /**
@@ -248,7 +282,7 @@ class WPQB_Plugin_Base {
         $total_regular_price = $regular_price * $applied_qty;
         $total_sale_price    = ( $sale_price > 0 && $sale_price < $regular_price ) ? ( $sale_price * $applied_qty ) : 0.0;
 
-        return [
+        $pricing_data = [
             'bundle_index'           => absint( $bundle_index ),
             'bundle_name'            => isset( $bundle['name'] ) ? sanitize_text_field( $bundle['name'] ) : '',
             'tier_qty'               => $tier_qty,
@@ -262,6 +296,14 @@ class WPQB_Plugin_Base {
             'image_id'               => isset( $bundle['image_id'] ) ? absint( $bundle['image_id'] ) : 0,
             'source_product_id'      => $product->get_id(),
         ];
+
+        /*
+         * Filters resolved pricing data for a single bundle tier.
+         *
+         * Since: 2.3.0
+         * Arguments: $pricing_data, $product, $bundle, $bundle_index, $cart_qty, $this
+         */
+        return apply_filters( 'wpqb_bundle_pricing_data', $pricing_data, $product, $bundle, $bundle_index, $cart_qty, $this );
     }
 
     /**
@@ -294,7 +336,13 @@ class WPQB_Plugin_Base {
             }
         }
 
-        return $match;
+        /*
+         * Filters the best matching bundle tier for a quantity.
+         *
+         * Since: 2.3.0
+         * Arguments: $match, $bundles, $quantity, $this
+         */
+        return apply_filters( 'wpqb_matching_bundle_for_quantity', $match, $bundles, $quantity, $this );
     }
 
     /**
@@ -348,6 +396,14 @@ class WPQB_Plugin_Base {
         // Clamp card border radius between 0 and 40.
         $parts[] = '--wpqb-card-radius:' . max( 0, min( 40, absint( $this->settings['card_radius'] ) ) ) . 'px';
 
-        return implode( ';', $parts );
+        $inline_style = implode( ';', $parts );
+
+        /*
+         * Filters the frontend wrapper inline CSS variable string.
+         *
+         * Since: 2.3.0
+         * Arguments: $inline_style, $parts, $settings, $this
+         */
+        return apply_filters( 'wpqb_frontend_inline_style', $inline_style, $parts, $this->settings, $this );
     }
 }

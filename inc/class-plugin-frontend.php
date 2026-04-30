@@ -89,6 +89,9 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
             }
         }
 
+        // Hook: wpqb_should_load_frontend_assets( $load_assets, $this ).
+        $load_assets = (bool) apply_filters( 'wpqb_should_load_frontend_assets', $load_assets, $this );
+
         if (!$load_assets) {
             return;
         }
@@ -100,34 +103,39 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
 
         wp_enqueue_style('wpqb-frontend-css', WPQB_PLUGIN_URL . 'assets/css/frontend.css', [], WPQB_PLUGIN_VERSION);
         wp_enqueue_script('wpqb-frontend-js', WPQB_PLUGIN_URL . 'assets/js/frontend.js', ['jquery'], WPQB_PLUGIN_VERSION, true);
+        $script_settings = [
+            'designType' => $this->settings['design_type'],
+            'selectionMode' => $this->settings['selection_mode'],
+            'requireBundleSelection' => ('yes' === $this->settings['require_bundle_selection']),
+            'showSelectedTotal' => ('yes' === $this->settings['show_selected_total']),
+            'showSavings' => ('yes' === $this->settings['show_savings']),
+            'showDiscountAfterTitle' => ('yes' === $this->settings['show_discount_after_title']),
+            'showPerItemPrice' => ('yes' === $this->settings['show_per_item_price']),
+            'showRegularPriceWhenSale' => ('yes' === $this->settings['show_regular_price_when_sale']),
+            'showQtyAfterPerItem' => ('yes' === $this->settings['show_qty_after_per_item']),
+            'enableBundleSorting' => ('yes' === $this->settings['enable_bundle_sorting']),
+            'autoSelectByQtyChange' => ('yes' === $this->settings['auto_select_by_qty_change']),
+            'headings' => [
+                'bundle' => !empty($this->settings['table_heading_bundle']) ? $this->settings['table_heading_bundle'] : __('Bundle', 'wpqb'),
+                'perItem' => !empty($this->settings['table_heading_per_item']) ? $this->settings['table_heading_per_item'] : __('Per Item', 'wpqb'),
+                'totalPrice' => !empty($this->settings['table_heading_total_price']) ? $this->settings['table_heading_total_price'] : __('Total Price', 'wpqb'),
+            ],
+            'i18n' => [
+                'selectVariation' => !empty($this->settings['variable_placeholder_text']) ? $this->settings['variable_placeholder_text'] : __('Select product options to view bundles.', 'wpqb'),
+                'noBundles' => __('No bundles found for this variation.', 'wpqb'),
+                'chooseBundle' => __('Please select a bundle before adding this product to your cart.', 'wpqb'),
+                'savePrefix' => __('Save', 'wpqb'),
+                'bundleFallback' => __('Bundle', 'wpqb'),
+            ],
+        ];
+
+        // Hook: wpqb_frontend_script_settings( $script_settings, $product, $this ).
+        $script_settings = apply_filters( 'wpqb_frontend_script_settings', $script_settings, $product, $this );
+
         wp_localize_script(
             'wpqb-frontend-js',
             'wpqbPluginSettings',
-            [
-                'designType' => $this->settings['design_type'],
-                'selectionMode' => $this->settings['selection_mode'],
-                'requireBundleSelection' => ('yes' === $this->settings['require_bundle_selection']),
-                'showSelectedTotal' => ('yes' === $this->settings['show_selected_total']),
-                'showSavings' => ('yes' === $this->settings['show_savings']),
-                'showDiscountAfterTitle' => ('yes' === $this->settings['show_discount_after_title']),
-                'showPerItemPrice' => ('yes' === $this->settings['show_per_item_price']),
-                'showRegularPriceWhenSale' => ('yes' === $this->settings['show_regular_price_when_sale']),
-                'showQtyAfterPerItem' => ('yes' === $this->settings['show_qty_after_per_item']),
-                'enableBundleSorting' => ('yes' === $this->settings['enable_bundle_sorting']),
-                'autoSelectByQtyChange' => ('yes' === $this->settings['auto_select_by_qty_change']),
-                'headings' => [
-                    'bundle' => !empty($this->settings['table_heading_bundle']) ? $this->settings['table_heading_bundle'] : __('Bundle', 'wpqb'),
-                    'perItem' => !empty($this->settings['table_heading_per_item']) ? $this->settings['table_heading_per_item'] : __('Per Item', 'wpqb'),
-                    'totalPrice' => !empty($this->settings['table_heading_total_price']) ? $this->settings['table_heading_total_price'] : __('Total Price', 'wpqb'),
-                ],
-                'i18n' => [
-                    'selectVariation' => !empty($this->settings['variable_placeholder_text']) ? $this->settings['variable_placeholder_text'] : __('Select product options to view bundles.', 'wpqb'),
-                    'noBundles' => __('No bundles found for this variation.', 'wpqb'),
-                    'chooseBundle' => __('Please select a bundle before adding this product to your cart.', 'wpqb'),
-                    'savePrefix' => __('Save', 'wpqb'),
-                    'bundleFallback' => __('Bundle', 'wpqb'),
-                ],
-            ]
+            $script_settings
         );
     }
 
@@ -154,7 +162,15 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
             return;
         }
 
-        echo $this->get_bundles_markup( $product, true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- markup is escaped inside get_bundles_markup() and its templates.
+        $markup = $this->get_bundles_markup( $product, true );
+
+        // Hook: wpqb_before_display_bundles( $markup, $product, $this ).
+        do_action( 'wpqb_before_display_bundles', $markup, $product, $this );
+
+        echo $markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- markup is escaped inside get_bundles_markup() and its templates.
+
+        // Hook: wpqb_after_display_bundles( $markup, $product, $this ).
+        do_action( 'wpqb_after_display_bundles', $markup, $product, $this );
     }
 
     /**
@@ -181,12 +197,18 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
             'wpqb_bundles'
         );
 
+        // Hook: wpqb_shortcode_atts( $atts, $this ).
+        $atts = apply_filters( 'wpqb_shortcode_atts', $atts, $this );
+
         $product = wc_get_product( absint( $atts['product_id'] ) );
         if ( ! $product instanceof WC_Product || ! $this->is_product_type_enabled( $product ) ) {
             return '';
         }
 
-        return $this->get_bundles_markup( $product, false );
+        $markup = $this->get_bundles_markup( $product, false );
+
+        // Hook: wpqb_shortcode_markup( $markup, $product, $atts, $this ).
+        return apply_filters( 'wpqb_shortcode_markup', $markup, $product, $atts, $this );
     }
 
     /**
@@ -220,7 +242,7 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
                 continue;
             }
 
-            $prepared_bundles[] = [
+            $prepared_bundle = [
                 'bundle_index'  => $pricing['bundle_index'],
                 'bundle_name'   => $pricing['bundle_name'],
                 'qty'           => $pricing['tier_qty'],
@@ -231,11 +253,15 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
                 'image_id'      => $pricing['image_id'],
                 'image_url'     => $pricing['image_id'] ? wp_get_attachment_image_url( $pricing['image_id'], 'woocommerce_thumbnail' ) : '',
             ];
+
+            // Hook: wpqb_variation_prepared_bundle( $prepared_bundle, $pricing, $variation, $bundle, $index, $this ).
+            $prepared_bundles[] = apply_filters( 'wpqb_variation_prepared_bundle', $prepared_bundle, $pricing, $variation, $bundle, $index, $this );
         }
 
         $variation_data['wpqb_bundles'] = $prepared_bundles;
 
-        return $variation_data;
+        // Hook: wpqb_variation_bundle_data( $variation_data, $variation, $this ).
+        return apply_filters( 'wpqb_variation_bundle_data', $variation_data, $variation, $this );
     }
 
     /**
@@ -265,12 +291,22 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
         $bundle_data = $this->resolve_requested_bundle_data( $product_id, $variation_id, $quantity );
 
         if ( 'yes' === $this->settings['require_bundle_selection'] && $this->product_has_bundles( $variation_id ?: $product_id ) && empty( $bundle_data ) ) {
-            wc_add_notice( __( 'Please select a quantity bundle before adding this product to your cart.', 'wpqb' ), 'error' );
+            $notice_message = apply_filters(
+                'wpqb_required_bundle_notice_text',
+                __( 'Please select a quantity bundle before adding this product to your cart.', 'wpqb' ),
+                $product_id,
+                $variation_id,
+                $quantity,
+                $this
+            );
 
-            return false;
+            wc_add_notice( $notice_message, 'error' );
+
+            $passed = false;
         }
 
-        return $passed;
+        // Hook: wpqb_validate_bundle_selection( $passed, $bundle_data, $product_id, $quantity, $variation_id, $this ).
+        return (bool) apply_filters( 'wpqb_validate_bundle_selection', $passed, $bundle_data, $product_id, $quantity, $variation_id, $this );
     }
 
     /**
@@ -297,11 +333,19 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
             return $cart_item_data;
         }
 
+        // Hook: wpqb_cart_item_bundle_data( $bundle_data, $cart_item_data, $product_id, $variation_id, $quantity, $this ).
+        $bundle_data = apply_filters( 'wpqb_cart_item_bundle_data', $bundle_data, $cart_item_data, $product_id, $variation_id, $quantity, $this );
+
+        if ( empty( $bundle_data ) ) {
+            return $cart_item_data;
+        }
+
         $cart_item_data['wpqb_bundle']  = $bundle_data;
         // Unique key prevents WooCommerce from merging cart items with different bundle selections.
         $cart_item_data['unique_key']   = md5( wp_json_encode( $bundle_data ) . '|' . microtime( true ) );
 
-        return $cart_item_data;
+        // Hook: wpqb_add_bundle_to_cart_item( $cart_item_data, $bundle_data, $product_id, $variation_id, $this ).
+        return apply_filters( 'wpqb_add_bundle_to_cart_item', $cart_item_data, $bundle_data, $product_id, $variation_id, $this );
     }
 
     /**
@@ -325,25 +369,41 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
         $bundle      = $cart_item['wpqb_bundle'];
         $applied_qty = isset( $cart_item['quantity'] ) ? absint( $cart_item['quantity'] ) : absint( $bundle['applied_qty'] );
 
+        $display_labels = apply_filters(
+            'wpqb_cart_display_labels',
+            [
+                'bundle'         => __( 'Bundle', 'wpqb' ),
+                'pricing_tier'   => __( 'Pricing Tier', 'wpqb' ),
+                'applied_qty'    => __( 'Applied Quantity', 'wpqb' ),
+                'per_item_price' => __( 'Per Item Price', 'wpqb' ),
+                'savings'        => __( 'Bundle Savings', 'wpqb' ),
+                'tier_format'    => __( 'Applies from %d items', 'wpqb' ),
+                'qty_format'     => __( '%d items', 'wpqb' ),
+            ],
+            $bundle,
+            $cart_item,
+            $this
+        );
+
         if ( ! empty( $bundle['bundle_name'] ) ) {
             $item_data[] = [
-                'name'  => __( 'Bundle', 'wpqb' ),
+                'name'  => $display_labels['bundle'],
                 'value' => esc_html( $bundle['bundle_name'] ),
             ];
         }
 
         $item_data[] = [
-            'name'  => __( 'Pricing Tier', 'wpqb' ),
-            'value' => esc_html( sprintf( __( 'Applies from %d items', 'wpqb' ), absint( $bundle['tier_qty'] ) ) ),
+            'name'  => $display_labels['pricing_tier'],
+            'value' => esc_html( sprintf( $display_labels['tier_format'], absint( $bundle['tier_qty'] ) ) ),
         ];
 
         $item_data[] = [
-            'name'  => __( 'Applied Quantity', 'wpqb' ),
-            'value' => esc_html( sprintf( __( '%d items', 'wpqb' ), $applied_qty ) ),
+            'name'  => $display_labels['applied_qty'],
+            'value' => esc_html( sprintf( $display_labels['qty_format'], $applied_qty ) ),
         ];
 
         $item_data[] = [
-            'name'  => __( 'Per Item Price', 'wpqb' ),
+            'name'  => $display_labels['per_item_price'],
             'value' => wp_kses_post( wc_price( $bundle['per_item_price'] ) ),
         ];
 
@@ -351,12 +411,13 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
             $savings = $bundle['total_regular_price'] - $bundle['total_sale_price'];
 
             $item_data[] = [
-                'name'  => __( 'Bundle Savings', 'wpqb' ),
+                'name'  => $display_labels['savings'],
                 'value' => wp_kses_post( wc_price( $savings ) ),
             ];
         }
 
-        return $item_data;
+        // Hook: wpqb_cart_item_display_data( $item_data, $cart_item, $bundle, $this ).
+        return apply_filters( 'wpqb_cart_item_display_data', $item_data, $cart_item, $bundle, $this );
     }
 
     /**
@@ -387,6 +448,8 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
             return;
         }
 
+        do_action( 'wpqb_before_update_cart_item_price', $cart, $this );
+
         foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
             if ( empty( $cart_item['wpqb_bundle'] ) || empty( $cart_item['data'] ) ) {
                 continue;
@@ -403,12 +466,18 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
                 }
 
                 unset( $cart->cart_contents[ $cart_item_key ]['wpqb_bundle'] );
+                do_action( 'wpqb_removed_invalid_cart_bundle', $cart_item_key, $cart_item, $cart, $this );
                 continue;
             }
 
             $cart->cart_contents[ $cart_item_key ]['wpqb_bundle'] = $bundle;
             $cart->cart_contents[ $cart_item_key ]['data']->set_price( (float) $bundle['per_item_price'] );
+
+            // Hook: wpqb_after_cart_item_bundle_refresh( $cart_item_key, $bundle, $cart_item, $cart, $this ).
+            do_action( 'wpqb_after_cart_item_bundle_refresh', $cart_item_key, $bundle, $cart_item, $cart, $this );
         }
+
+        do_action( 'wpqb_after_update_cart_item_price', $cart, $this );
     }
 
     /**
@@ -439,21 +508,40 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
 
         $bundle = $values['wpqb_bundle'];
 
+        $meta_labels = apply_filters(
+            'wpqb_order_item_meta_labels',
+            [
+                'bundle'         => __( 'Bundle', 'wpqb' ),
+                'pricing_tier'   => __( 'Pricing Tier', 'wpqb' ),
+                'applied_qty'    => __( 'Applied Quantity', 'wpqb' ),
+                'per_item_price' => __( 'Per Item Price', 'wpqb' ),
+                'savings'        => __( 'Bundle Savings', 'wpqb' ),
+                'tier_format'    => __( 'Applies from %d items', 'wpqb' ),
+                'qty_format'     => __( '%d items', 'wpqb' ),
+            ],
+            $bundle,
+            $values,
+            $this
+        );
+
         if ( ! empty( $bundle['bundle_name'] ) ) {
-            $item->add_meta_data( __( 'Bundle', 'wpqb' ), $bundle['bundle_name'], true );
+            $item->add_meta_data( $meta_labels['bundle'], $bundle['bundle_name'], true );
         }
 
-        $item->add_meta_data( __( 'Pricing Tier', 'wpqb' ),    sprintf( __( 'Applies from %d items', 'wpqb' ), absint( $bundle['tier_qty'] ) ),     true );
-        $item->add_meta_data( __( 'Applied Quantity', 'wpqb' ), sprintf( __( '%d items', 'wpqb' ),             absint( $bundle['applied_qty'] ) ),    true );
-        $item->add_meta_data( __( 'Per Item Price', 'wpqb' ),   wp_strip_all_tags( wc_price( $bundle['per_item_price'] ) ),                         true );
+        $item->add_meta_data( $meta_labels['pricing_tier'], sprintf( $meta_labels['tier_format'], absint( $bundle['tier_qty'] ) ), true );
+        $item->add_meta_data( $meta_labels['applied_qty'], sprintf( $meta_labels['qty_format'], absint( $bundle['applied_qty'] ) ), true );
+        $item->add_meta_data( $meta_labels['per_item_price'], wp_strip_all_tags( wc_price( $bundle['per_item_price'] ) ), true );
 
         if ( 'yes' === $this->settings['show_savings'] && ! empty( $bundle['total_sale_price'] ) && $bundle['total_sale_price'] < $bundle['total_regular_price'] ) {
             $savings = $bundle['total_regular_price'] - $bundle['total_sale_price'];
-            $item->add_meta_data( __( 'Bundle Savings', 'wpqb' ), wp_strip_all_tags( wc_price( $savings ) ), true );
+            $item->add_meta_data( $meta_labels['savings'], wp_strip_all_tags( wc_price( $savings ) ), true );
         }
 
         // Private meta key stores the full bundle array for programmatic access.
         $item->add_meta_data( '_wpqb_bundle_data', $bundle, false );
+
+        // Hook: wpqb_after_save_bundle_to_order( $item, $bundle, $values, $this ).
+        do_action( 'wpqb_after_save_bundle_to_order', $item, $bundle, $values, $this );
     }
 
     /**
@@ -475,7 +563,9 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
         }
 
         // Fall back to a sensible default when the stored position is no longer valid.
-        return isset( $positions[ $position ] ) ? $position : 'woocommerce_before_add_to_cart_button';
+        $display_hook = isset( $positions[ $position ] ) ? $position : 'woocommerce_before_add_to_cart_button';
+
+        return apply_filters( 'wpqb_display_hook', $display_hook, $position, $positions, $this );
     }
 
     /**
@@ -526,18 +616,25 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
 
         // Explicit index: customer selected a specific tier.
         if ( null !== $requested_index && isset( $bundles[ $requested_index ] ) ) {
-            return $this->build_bundle_pricing_data( $product, $bundles[ $requested_index ], $requested_index, $quantity );
+            $resolved_bundle = $this->build_bundle_pricing_data( $product, $bundles[ $requested_index ], $requested_index, $quantity );
+
+            // Hook: wpqb_resolved_bundle_data( $resolved_bundle, $product_id, $variation_id, $quantity, $requested_index, $this ).
+            return apply_filters( 'wpqb_resolved_bundle_data', $resolved_bundle, $product_id, $variation_id, $quantity, $requested_index, $this );
         }
 
         // Auto mode: find the best matching tier for the given quantity.
         if ( 'auto' === $this->settings['selection_mode'] ) {
             $matched_bundle = $this->find_matching_bundle_for_quantity( $bundles, $quantity );
             if ( ! empty( $matched_bundle ) ) {
-                return $this->build_bundle_pricing_data( $product, $matched_bundle['bundle'], $matched_bundle['index'], $quantity );
+                $resolved_bundle = $this->build_bundle_pricing_data( $product, $matched_bundle['bundle'], $matched_bundle['index'], $quantity );
+
+                // Hook: wpqb_resolved_bundle_data( $resolved_bundle, $product_id, $variation_id, $quantity, $requested_index, $this ).
+                return apply_filters( 'wpqb_resolved_bundle_data', $resolved_bundle, $product_id, $variation_id, $quantity, $requested_index, $this );
             }
         }
 
-        return [];
+        // Hook: wpqb_resolved_bundle_data( [], $product_id, $variation_id, $quantity, $requested_index, $this ).
+        return apply_filters( 'wpqb_resolved_bundle_data', [], $product_id, $variation_id, $quantity, $requested_index, $this );
     }
 
     /**
@@ -588,10 +685,17 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
             }
         }
 
+        $rows_html = apply_filters( 'wpqb_bundles_rows_html', $rows_html, $product, $is_primary_product_form, $this );
+        $cards_html = apply_filters( 'wpqb_bundles_cards_html', $cards_html, $product, $is_primary_product_form, $this );
+
+        do_action( 'wpqb_before_render_bundles_template', $product, $rows_html, $cards_html, $is_primary_product_form, $this );
+
         ob_start();
         wpqb_plugin_get_template(
             'frontend-bundles',
-            [
+            apply_filters(
+                'wpqb_bundles_template_args',
+                [
                 'settings'                => $this->settings,
                 'is_variable'             => $is_variable,
                 'is_table'                => ( 'table' === $this->settings['design_type'] ),
@@ -599,10 +703,19 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
                 'inline_style'            => $this->get_frontend_inline_style(),
                 'rows_html'               => implode( '', $rows_html ),
                 'cards_html'              => implode( '', $cards_html ),
-            ]
+                ],
+                $product,
+                $is_primary_product_form,
+                $this
+            )
         );
 
-        return ob_get_clean();
+        do_action( 'wpqb_after_render_bundles_template', $product, $rows_html, $cards_html, $is_primary_product_form, $this );
+
+        $markup = ob_get_clean();
+
+        // Hook: wpqb_bundles_markup( $markup, $product, $is_primary_product_form, $this ).
+        return apply_filters( 'wpqb_bundles_markup', $markup, $product, $is_primary_product_form, $this );
     }
 
     /**
@@ -659,7 +772,10 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
             ]
         );
 
-        return ob_get_clean();
+        $markup = ob_get_clean();
+
+        // Hook: wpqb_bundle_row_html( $markup, $pricing, $fallback_index, $this ).
+        return apply_filters( 'wpqb_bundle_row_html', $markup, $pricing, $fallback_index, $this );
     }
 
     /**
@@ -726,7 +842,10 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
             ]
         );
 
-        return ob_get_clean();
+        $markup = ob_get_clean();
+
+        // Hook: wpqb_bundle_card_html( $markup, $pricing, $fallback_index, $this ).
+        return apply_filters( 'wpqb_bundle_card_html', $markup, $pricing, $fallback_index, $this );
     }
 
     /**
@@ -759,20 +878,26 @@ class WPQB_Plugin_Frontend extends WPQB_Plugin_Base {
         $bundles           = $this->get_product_bundles( $source_product_id );
 
         if ( ! $product instanceof WC_Product || ! isset( $bundles[ $bundle_index ] ) ) {
-            return [];
+            return apply_filters( 'wpqb_refreshed_cart_bundle_data', [], $cart_item, $quantity, $this );
         }
 
         // Auto mode: re-match the best tier for the updated quantity.
         if ( 'auto' === $this->settings['selection_mode'] ) {
             $matched_bundle = $this->find_matching_bundle_for_quantity( $bundles, $quantity );
             if ( ! empty( $matched_bundle ) ) {
-                return $this->build_bundle_pricing_data( $product, $matched_bundle['bundle'], $matched_bundle['index'], $quantity );
+                $bundle_data = $this->build_bundle_pricing_data( $product, $matched_bundle['bundle'], $matched_bundle['index'], $quantity );
+
+                // Hook: wpqb_refreshed_cart_bundle_data( $bundle_data, $cart_item, $quantity, $this ).
+                return apply_filters( 'wpqb_refreshed_cart_bundle_data', $bundle_data, $cart_item, $quantity, $this );
             }
 
-            return [];
+            return apply_filters( 'wpqb_refreshed_cart_bundle_data', [], $cart_item, $quantity, $this );
         }
 
         // Manual mode: use the previously selected index.
-        return $this->build_bundle_pricing_data( $product, $bundles[ $bundle_index ], $bundle_index, $quantity );
+        $bundle_data = $this->build_bundle_pricing_data( $product, $bundles[ $bundle_index ], $bundle_index, $quantity );
+
+        // Hook: wpqb_refreshed_cart_bundle_data( $bundle_data, $cart_item, $quantity, $this ).
+        return apply_filters( 'wpqb_refreshed_cart_bundle_data', $bundle_data, $cart_item, $quantity, $this );
     }
 }

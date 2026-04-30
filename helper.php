@@ -37,7 +37,7 @@ function wpqb_plugin_has_active_required_plugins( $plugin_name = '' ) {
  * @return array<string, mixed>
  */
 function wpqb_plugin_get_default_settings() {
-    return [
+    $defaults = [
         'table_title' => __('Quantity Bundles', 'wpqb'),
         'variable_placeholder_text' => __('Select product options to view bundles.', 'wpqb'),
         'design_type' => 'table',
@@ -82,6 +82,14 @@ function wpqb_plugin_get_default_settings() {
         'sale_price_color' => '#d63638',
         'strikethrough_price_color' => '#8a8a8a',
     ];
+
+    /*
+     * Filters the plugin default settings.
+     *
+     * Since: 2.3.0
+     * Arguments: $defaults
+     */
+    return apply_filters( 'wpqb_plugin_default_settings', $defaults );
 }
 
 /**
@@ -90,12 +98,20 @@ function wpqb_plugin_get_default_settings() {
  * @return array<string, string>
  */
 function wpqb_plugin_get_display_positions() {
-    return [
+    $positions = [
         'woocommerce_before_add_to_cart_button' => __( 'Before add to cart button', 'wpqb' ),
         'woocommerce_after_add_to_cart_button'  => __( 'After add to cart button', 'wpqb' ),
         'woocommerce_single_product_summary'    => __( 'Inside product summary', 'wpqb' ),
         'shortcode_only'                        => __( 'Shortcode only (no WooCommerce hook output)', 'wpqb' ),
     ];
+
+    /*
+     * Filters the supported frontend display hook positions.
+     *
+     * Since: 2.3.0
+     * Arguments: $positions
+     */
+    return apply_filters( 'wpqb_plugin_display_positions', $positions );
 }
 
 /**
@@ -138,7 +154,13 @@ function wpqb_plugin_sanitize_settings( $settings ) {
     // Numeric fields.
     $sanitized['card_radius'] = isset( $settings['card_radius'] ) ? max( 0, min( 40, absint( $settings['card_radius'] ) ) ) : absint( $defaults['card_radius'] );
 
-    return $sanitized;
+    /*
+     * Filters sanitized plugin settings before they are persisted.
+     *
+     * Since: 2.3.0
+     * Arguments: $sanitized, $settings, $defaults
+     */
+    return apply_filters( 'wpqb_plugin_sanitized_settings', $sanitized, $settings, $defaults );
 }
 
 /**
@@ -211,8 +233,32 @@ function wpqb_plugin_get_template( $template_name, $args = [], $template_path = 
         $template = $default_path . $template_name;
     }
 
+    /*
+     * Filters the resolved template path before it is included.
+     *
+     * Since: 2.3.0
+     * Arguments: $template, $template_name, $args, $template_path, $default_path
+     */
+    $template = apply_filters( 'wpqb_located_template', $template, $template_name, $args, $template_path, $default_path );
+
     if ( file_exists( $template ) ) {
+        /*
+         * Fires before a plugin template is included.
+         *
+         * Since: 2.3.0
+         * Arguments: $template, $template_name, $args
+         */
+        do_action( 'wpqb_before_template_part', $template, $template_name, $args );
+
         include $template;
+
+        /*
+         * Fires after a plugin template is included.
+         *
+         * Since: 2.3.0
+         * Arguments: $template, $template_name, $args
+         */
+        do_action( 'wpqb_after_template_part', $template, $template_name, $args );
     }
 }
 
@@ -230,7 +276,15 @@ function wpqb_plugin_settings( $data = null ) {
 
     $settings = get_option( 'wpqb_plugin_setting', [] );
 
-    return wp_parse_args( is_array( $settings ) ? $settings : [], wpqb_plugin_get_default_settings() );
+    $settings = wp_parse_args( is_array( $settings ) ? $settings : [], wpqb_plugin_get_default_settings() );
+
+    /*
+     * Filters the runtime plugin settings array.
+     *
+     * Since: 2.3.0
+     * Arguments: $settings, $data
+     */
+    return apply_filters( 'wpqb_plugin_settings', $settings, $data );
 }
 
 /**

@@ -26,3 +26,17 @@ WC Products Qty Bundle adds quantity-based bundle pricing to WooCommerce product
 - Uninstall cleanup is opt-in and can be enabled from WooCommerce > Qty Bundles.
 - Translation loading expects language files in the `languages` directory.
 
+## Developer Hooks
+
+The plugin now exposes filters and actions for:
+
+- default settings and runtime settings
+- template resolution and before/after template rendering
+- sanitized bundle rows and resolved pricing data
+- admin settings saves and product or variation bundle saves
+- frontend localized script settings and rendered bundle markup
+- template-level hooks for titles, headings, placeholders, classes, and before/after markup blocks
+- cart item bundle payloads, cart recalculation, and order item persistence
+
+See `docs/hooks.md` for the full hook reference and argument list.
+

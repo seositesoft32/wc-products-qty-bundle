@@ -136,6 +136,14 @@ class WPQB_Plugin_Admin extends WPQB_Plugin_Base {
             'shortcode_example' => '[wpqb_bundles product_id="123"]',
         ];
 
+        /*
+         * Filters the data passed to the plugin settings page template.
+         *
+         * Since: 2.3.0
+         * Arguments: $data, $this
+         */
+        $data = apply_filters( 'wpqb_admin_settings_page_data', $data, $this );
+
         wpqb_plugin_get_template( 'admin-menu', $data );
     }
 
@@ -239,6 +247,14 @@ class WPQB_Plugin_Admin extends WPQB_Plugin_Base {
         update_option( 'wpqb_plugin_setting', $sanitized );
         $this->settings = wpqb_plugin_settings();
 
+        /*
+         * Fires after plugin settings are saved from the admin AJAX endpoint.
+         *
+         * Since: 2.3.0
+         * Arguments: $sanitized, $settings, $this
+         */
+        do_action( 'wpqb_admin_settings_saved', $sanitized, $settings, $this );
+
         wp_send_json_success( [
             'message'  => __( 'Settings saved successfully.', 'wpqb' ),
             'settings' => $sanitized,
@@ -308,6 +324,14 @@ class WPQB_Plugin_Admin extends WPQB_Plugin_Base {
         // Resolve the thumbnail URL from the media library if an image is attached.
         $data['image_url'] = $data['image_id'] ? wp_get_attachment_image_url( $data['image_id'], 'thumbnail' ) : '';
 
+        /*
+         * Filters admin bundle row template data before rendering.
+         *
+         * Since: 2.3.0
+         * Arguments: $data, $index, $bundle, $name_prefix, $this
+         */
+        $data = apply_filters( 'wpqb_admin_bundle_field_data', $data, $index, $bundle, $name_prefix, $this );
+
         wpqb_plugin_get_template( 'admin-bundle-fields', $data );
     }
 
@@ -361,6 +385,14 @@ class WPQB_Plugin_Admin extends WPQB_Plugin_Base {
                 } else {
                     update_post_meta( $variation_id, '_wpqb_qty_bundles', $bundles );
                 }
+
+                /*
+                 * Fires after bundle rows are saved for a variation during parent product save.
+                 *
+                 * Since: 2.3.0
+                 * Arguments: $variation_id, $bundles, $raw_bundles, $this
+                 */
+                do_action( 'wpqb_saved_product_bundles', $variation_id, $bundles, $raw_bundles, $this );
             }
 
             return;
@@ -371,10 +403,26 @@ class WPQB_Plugin_Admin extends WPQB_Plugin_Base {
 
         if ( empty( $bundles ) ) {
             delete_post_meta( $post_id, '_wpqb_qty_bundles' );
+
+            /*
+             * Fires after bundle rows are cleared for a product.
+             *
+             * Since: 2.3.0
+             * Arguments: $post_id, $bundles, $raw_bundles, $this
+             */
+            do_action( 'wpqb_saved_product_bundles', $post_id, $bundles, [], $this );
             return;
         }
 
         update_post_meta( $post_id, '_wpqb_qty_bundles', $bundles );
+
+        /*
+         * Fires after bundle rows are saved for a simple product.
+         *
+         * Since: 2.3.0
+         * Arguments: $post_id, $bundles, $raw_bundles, $this
+         */
+        do_action( 'wpqb_saved_product_bundles', $post_id, $bundles, wp_unslash( $_POST['wpqb_bundles'] ), $this ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in can_save_product_bundles().
     }
 
     /**
@@ -400,6 +448,14 @@ class WPQB_Plugin_Admin extends WPQB_Plugin_Base {
             'bundles'      => $this->get_product_bundles( $variation_id ),
             'renderer'     => $this,
         ];
+
+        /*
+         * Filters variation bundle panel data before rendering.
+         *
+         * Since: 2.3.0
+         * Arguments: $data, $variation_id, $variation, $this
+         */
+        $data = apply_filters( 'wpqb_admin_variation_bundle_data', $data, $variation_id, $variation, $this );
 
         wpqb_plugin_get_template( 'admin-variation-bundles', $data );
     }
@@ -432,10 +488,26 @@ class WPQB_Plugin_Admin extends WPQB_Plugin_Base {
 
         if ( empty( $bundles ) ) {
             delete_post_meta( $variation_id, '_wpqb_qty_bundles' );
+
+            /*
+             * Fires after bundle rows are cleared for a variation save request.
+             *
+             * Since: 2.3.0
+             * Arguments: $variation_id, $bundles, $raw_bundles, $this
+             */
+            do_action( 'wpqb_saved_variation_bundles', $variation_id, $bundles, $raw_bundles, $this );
             return;
         }
 
         update_post_meta( $variation_id, '_wpqb_qty_bundles', $bundles );
+
+        /*
+         * Fires after bundle rows are saved for an individual variation request.
+         *
+         * Since: 2.3.0
+         * Arguments: $variation_id, $bundles, $raw_bundles, $this
+         */
+        do_action( 'wpqb_saved_variation_bundles', $variation_id, $bundles, $raw_bundles, $this );
     }
 
     /**
