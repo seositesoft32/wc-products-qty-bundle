@@ -448,6 +448,20 @@ class WPQB_Plugin_Init
         $bundles = $is_variable ? [] : $this->get_product_bundles($product->get_id());
         $is_table = ('table' === $this->settings['design_type']);
         $inline_style = $this->get_frontend_inline_style();
+        $container_style = $inline_style;
+
+        if ($is_variable) {
+            $container_style .= (!empty($container_style) ? ';' : '') . 'display:none';
+        }
+
+        $selected_total_styles = [];
+        if ('yes' !== $this->settings['show_selected_total']) {
+            $selected_total_styles[] = 'display:none';
+        }
+
+        if ($is_variable) {
+            $selected_total_styles[] = 'display:none';
+        }
 
         if (!$is_variable && 'yes' === $this->settings['enable_bundle_sorting']) {
             $bundles = $this->sort_bundles_by_qty($bundles);
@@ -464,7 +478,7 @@ class WPQB_Plugin_Init
         ob_start();
         ?>
         <div class="wpqb-bundles-frontend wpqb-design-<?php echo esc_attr($this->settings['design_type']); ?><?php echo $is_primary_product_form ? '' : ' wpqb-bundles-shortcode'; ?>"
-            style="<?php echo esc_attr($inline_style); ?>">
+            style="<?php echo esc_attr($container_style); ?>">
             <h3 class="wpqb-bundles-title">
                 <?php echo esc_html(!empty($this->settings['table_title']) ? $this->settings['table_title'] : __('Quantity Bundles', 'wpqb')); ?>
             </h3>
@@ -521,7 +535,7 @@ class WPQB_Plugin_Init
                 </div>
             </div>
         </div>
-        <p class="wpqb-selected-total" id="wpqb-selected-total" <?php echo ('yes' === $this->settings['show_selected_total']) ? '' : ' style="display:none;"'; ?>></p>
+        <p class="wpqb-selected-total" id="wpqb-selected-total" <?php echo !empty($selected_total_styles) ? ' style="' . esc_attr(implode(';', array_unique($selected_total_styles))) . '"' : ''; ?>></p>
         <?php
 
         return ob_get_clean();

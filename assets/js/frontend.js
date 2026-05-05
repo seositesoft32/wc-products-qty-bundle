@@ -56,6 +56,7 @@
         const $bundleTableBody = $('.wpqb-bundles-table tbody');
         const $bundleCards = $('.wpqb-bundles-cards');
         const $bundlePlaceholder = $('.wpqb-bundles-placeholder');
+        const $bundleHost = $('.wpqb-bundles-frontend');
         const $selectedTotal = $('#wpqb-selected-total');
         const $defaultPriceElement = $('.summary .price').first();
         const defaultPriceHTML = $defaultPriceElement.length ? $defaultPriceElement.html() : '';
@@ -218,6 +219,9 @@
             if (!rows.length) {
                 $bundleTableBody.empty();
                 $bundleCards.empty();
+                if (isVariableProduct) {
+                    toggleVariableBundleList(false);
+                }
                 if ($bundlePlaceholder.length) {
                     $bundlePlaceholder.text(i18n.noBundles || 'No bundles found for this variation.').show();
                 }
@@ -304,9 +308,50 @@
             $bundleCards.html(cardHtml);
             applyDynamicTableBodyStyles();
             sortBundleRowsByQty();
+            if (isVariableProduct) {
+                toggleVariableBundleList(true);
+            }
             if ($bundlePlaceholder.length) {
                 $bundlePlaceholder.hide();
             }
+        }
+
+        function toggleVariableBundleList(showList) {
+            if (!isVariableProduct) {
+                return;
+            }
+
+            const $tableWrap = $('.wpqb-bundles-table-wrap');
+            const $cardsWrap = $('.wpqb-bundles-cards');
+
+            if (!showList) {
+                $tableWrap.addClass('wpqb-hidden');
+                $cardsWrap.addClass('wpqb-hidden');
+                return;
+            }
+
+            if (settingsState.designType === 'cards') {
+                $tableWrap.addClass('wpqb-hidden');
+                $cardsWrap.removeClass('wpqb-hidden');
+                return;
+            }
+
+            $cardsWrap.addClass('wpqb-hidden');
+            $tableWrap.removeClass('wpqb-hidden');
+        }
+
+        function toggleVariableBundleHost(showHost) {
+            if (!isVariableProduct || !$bundleHost.length) {
+                return;
+            }
+
+            if (showHost) {
+                $bundleHost.show();
+                return;
+            }
+
+            $bundleHost.hide();
+            $selectedTotal.hide().text('');
         }
 
         function getBundleStyleVar(varName) {
@@ -358,6 +403,7 @@
                 const $variationPrice = $('.woocommerce-variation-price .price').first();
                 variationPriceHTML = $variationPrice.length ? $variationPrice.html() : '';
 
+                toggleVariableBundleHost(true);
                 deselectBundle();
                 renderVariationBundles(variation && variation.wpqb_bundles ? variation.wpqb_bundles : []);
                 if (settingsState.selectionMode === 'auto' && settingsState.autoSelectByQtyChange) {
@@ -372,6 +418,7 @@
                 if ($bundlePlaceholder.length) {
                     $bundlePlaceholder.text(i18n.selectVariation || 'Select product options to view bundles.').show();
                 }
+                toggleVariableBundleHost(false);
             });
         }
 
@@ -511,7 +558,9 @@
                 $('.wpqb-bundle-savings').show();
             }
 
-            if (settingsState.designType === 'cards') {
+            if (isVariableProduct && selectedVariationId <= 0) {
+                toggleVariableBundleList(false);
+            } else if (settingsState.designType === 'cards') {
                 $('.wpqb-bundles-table-wrap').addClass('wpqb-hidden');
                 $('.wpqb-bundles-cards').removeClass('wpqb-hidden');
             } else {
@@ -525,7 +574,8 @@
          * Uncomment if you want to force bundle selection
          */
         $('form.cart').on('submit', function (e) {
-            if (settingsState.requireBundleSelection && $('.wpqb-bundles-frontend').length && !selectedBundle) {
+            const hasSelectedVariation = !isVariableProduct || selectedVariationId > 0;
+            if (settingsState.requireBundleSelection && hasSelectedVariation && $('.wpqb-bundles-frontend:visible').length && !selectedBundle) {
                 e.preventDefault();
                 alert(i18n.chooseBundle || 'Please select a bundle before adding this product to your cart.');
                 return false;
@@ -555,9 +605,16 @@
         sortBundleRowsByQty();
         applySettingsToMarkup();
         applyDynamicTableBodyStyles();
-        if (settingsState.selectionMode === 'auto') {
+        if (isVariableProduct) {
+            toggleVariableBundleList(false);
+            toggleVariableBundleHost(false);
+            if ($bundlePlaceholder.length) {
+                $bundlePlaceholder.text(i18n.selectVariation || 'Select product options to view bundles.').show();
+            }
+        } else if (settingsState.selectionMode === 'auto') {
             selectBundleByQty(getCurrentCartQty());
         }
+
     });
 
 })(jQuery);
