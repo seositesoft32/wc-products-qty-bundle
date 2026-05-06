@@ -25,6 +25,8 @@ Key features:
 * Shortcode support: [wpqb_bundles product_id="123"]
 * Cart and order line item metadata for applied pricing tiers
 * Optional uninstall cleanup
+* Developer-friendly filters and actions for settings, templates, pricing, and cart or order flow
+* Template-level frontend hooks for changing labels, text, classes, and markup sections
 
 == Installation ==
 
@@ -52,6 +54,10 @@ No. The plugin recalculates pricing from saved product or variation metadata on 
 
 Only if you enable the cleanup option in WooCommerce > Qty Bundles.
 
+= Does the plugin expose developer hooks? =
+
+Yes. The plugin now includes filters and actions for settings, templates, bundle pricing, frontend rendering, cart item data, and order item persistence. See `docs/hooks.md` inside the plugin for the full reference.
+
 == Changelog ==
 
 = 2.3.0 =
@@ -61,3 +67,7 @@ Only if you enable the cleanup option in WooCommerce > Qty Bundles.
 * Added shortcode support and plugin action link.
 * Added HPOS and Cart/Checkout Blocks compatibility declarations.
 * Improved uninstall cleanup, readme metadata, and marketplace readiness.
+
+= 2.4.0 =
+* Added a documented developer hook layer for settings, templates, pricing, storefront rendering, cart item data, and order item persistence.
+* Added template-specific hooks in frontend bundle templates for inserting/removing blocks and managing text and attributes without template overrides.
